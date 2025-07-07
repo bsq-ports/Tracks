@@ -1,16 +1,15 @@
 param(
     [Parameter(ValueFromRemainingArguments=$true)]
     [string[]]$args,
-    [switch]$log = $false
+    [switch]$log = $false,
+    [switch]$release = $false
 )
 
-# Forward the "release" argument to build.ps1 if it exists
-$buildArgs = @()
-if ($args -contains "release") {
-    $buildArgs += "release"
+if ($release) {
+    & $PSScriptRoot/build.ps1 -release
+} else {
+    & $PSScriptRoot/build.ps1
 }
-
-& $PSScriptRoot/build.ps1 @buildArgs
 if ($?) {
     adb push build/libtracks.so /sdcard/ModData/com.beatgames.beatsaber/Modloader/mods/libtracks.so
     if ($?) {
