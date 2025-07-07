@@ -72,12 +72,15 @@ struct TimeUnit {
 };
 
 struct PropertyW {
-  Tracks::ffi::ValueProperty const* property;
+  Tracks::ffi::ValueProperty* property;
 
   constexpr PropertyW() = default;
-  constexpr PropertyW(Tracks::ffi::ValueProperty const* property) : property(property) {}
+  constexpr PropertyW(Tracks::ffi::ValueProperty* property) : property(property) {}
 
   operator Tracks::ffi::ValueProperty const*() const {
+    return property;
+  }
+  operator Tracks::ffi::ValueProperty*() const {
     return property;
   }
   operator bool() const {
@@ -85,29 +88,39 @@ struct PropertyW {
   }
 
   [[nodiscard]] Tracks::ffi::WrapBaseValueType GetType() const {
+    CRASH_UNLESS(property);
+
     return Tracks::ffi::property_get_type(property);
   }
   [[nodiscard]] Tracks::ffi::CValueProperty GetValue() const {
+    CRASH_UNLESS(property);
     return Tracks::ffi::property_get_value(property);
   }
 
   [[nodiscard]] TimeUnit GetTime() const {
+    CRASH_UNLESS(property);
+
     return Tracks::ffi::property_get_last_updated(property);
+  }
+
+  constexpr bool hasUpdated(Tracks::ffi::CValueProperty value, TimeUnit lastCheckedTime = {}) const {
+    return lastCheckedTime == TimeUnit() || TimeUnit(value.last_updated) >= lastCheckedTime;
   }
 
   [[nodiscard]] std::optional<NEVector::Quaternion> GetQuat(TimeUnit lastCheckedTime = {}) const {
     auto value = GetValue();
-    if (!value.value.has_value) return std::nullopt;
-    if (TimeUnit(value.last_updated) <= lastCheckedTime) return std::nullopt;
-    if (value.value.value.ty != Tracks::ffi::WrapBaseValueType::Quat) return std::nullopt;
-
+    if (!value.value.has_value) {return std::nullopt;}
+    if (!hasUpdated(value, lastCheckedTime)) {return std::nullopt;}
+    if (value.value.value.ty != Tracks::ffi::WrapBaseValueType::Quat) {
+      return std::nullopt;
+    }
     auto v = value.value.value.value;
     return NEVector::Quaternion{ v.quat.x, v.quat.y, v.quat.z, v.quat.w };
   }
   [[nodiscard]] std::optional<NEVector::Vector3> GetVec3(TimeUnit lastCheckedTime = {}) const {
     auto value = GetValue();
     if (!value.value.has_value) return std::nullopt;
-    if (TimeUnit(value.last_updated) <= lastCheckedTime) return std::nullopt;
+    if (!hasUpdated(value, lastCheckedTime)) return std::nullopt;
     if (value.value.value.ty != Tracks::ffi::WrapBaseValueType::Vec3) return std::nullopt;
 
     auto v = value.value.value.value;
@@ -116,7 +129,7 @@ struct PropertyW {
   [[nodiscard]] std::optional<NEVector::Vector4> GetVec4(TimeUnit lastCheckedTime = {}) const {
     auto value = GetValue();
     if (!value.value.has_value) return std::nullopt;
-    if (TimeUnit(value.last_updated) <= lastCheckedTime) return std::nullopt;
+    if (!hasUpdated(value, lastCheckedTime)) return std::nullopt;
     if (value.value.value.ty != Tracks::ffi::WrapBaseValueType::Vec4) return std::nullopt;
     auto v = value.value.value.value;
 
@@ -125,7 +138,7 @@ struct PropertyW {
   [[nodiscard]] std::optional<float> GetFloat(TimeUnit lastCheckedTime = {}) const {
     auto value = GetValue();
     if (!value.value.has_value) return std::nullopt;
-    if (TimeUnit(value.last_updated) <= lastCheckedTime) return std::nullopt;
+    if (!hasUpdated(value, lastCheckedTime)) return std::nullopt;
     if (value.value.value.ty != Tracks::ffi::WrapBaseValueType::Float) return std::nullopt;
 
     return value.value.value.value.float_v;
@@ -272,8 +285,22 @@ struct TrackW {
     return Tracks::ffi::track_get_path_properties_map(track);
   }
 
-  [[nodiscard]] std::string GetName() const {
+  /**
+   * @brief Get the Name object
+   *
+   * @return std::string_view Return a string view as the original string is leaked from the FFI.
+   */
+  [[nodiscard]] std::string_view GetName() const {
     return Tracks::ffi::track_get_name(track);
+  }
+
+  /**
+   * @brief Set the Name object
+   *
+   * @param name The name to set
+   */
+  void SetName(std::string_view name) const {
+    Tracks::ffi::track_set_name(track, name.data());
   }
 
   [[nodiscard]] std::span<UnityEngine::GameObject* const> GetGameObjects() const {

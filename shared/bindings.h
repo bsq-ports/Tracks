@@ -93,6 +93,7 @@ typedef uint32_t PropertyNames;
 #endif // __cplusplus
 
 typedef enum WrapBaseValueType {
+  Unknown = -1,
   Vec3 = 0,
   Quat = 1,
   Vec4 = 2,
@@ -131,11 +132,11 @@ typedef union CEventTypeData {
   /**
    * AnimateTrack(ValueProperty)
    */
-  const struct ValueProperty *property;
+  struct ValueProperty *property;
   /**
    * AssignPathAnimation(PathProperty)
    */
-  const PathProperty *path_property;
+  PathProperty *path_property;
 } CEventTypeData;
 
 typedef struct CEventType {
@@ -248,20 +249,20 @@ typedef struct GameObject {
 } GameObject;
 
 typedef struct CPropertiesMap {
-  const struct ValueProperty *position;
-  const struct ValueProperty *rotation;
-  const struct ValueProperty *scale;
-  const struct ValueProperty *local_rotation;
-  const struct ValueProperty *local_position;
-  const struct ValueProperty *dissolve;
-  const struct ValueProperty *dissolve_arrow;
-  const struct ValueProperty *time;
-  const struct ValueProperty *cuttable;
-  const struct ValueProperty *color;
-  const struct ValueProperty *attentuation;
-  const struct ValueProperty *fog_offset;
-  const struct ValueProperty *height_fog_start_y;
-  const struct ValueProperty *height_fog_height;
+  struct ValueProperty *position;
+  struct ValueProperty *rotation;
+  struct ValueProperty *scale;
+  struct ValueProperty *local_rotation;
+  struct ValueProperty *local_position;
+  struct ValueProperty *dissolve;
+  struct ValueProperty *dissolve_arrow;
+  struct ValueProperty *time;
+  struct ValueProperty *cuttable;
+  struct ValueProperty *color;
+  struct ValueProperty *attentuation;
+  struct ValueProperty *fog_offset;
+  struct ValueProperty *height_fog_start_y;
+  struct ValueProperty *height_fog_height;
 } CPropertiesMap;
 
 typedef struct CPathPropertiesMap {
@@ -507,6 +508,10 @@ void track_destroy(struct Track *track);
 
 void track_set_name(struct Track *track, const char *name);
 
+/**
+ * Returns the name of the track as a C string.
+ * This leaks memory
+ */
 const char *track_get_name(const struct Track *track);
 
 void track_register_game_object(struct Track *track, struct GameObject game_object);
@@ -517,9 +522,9 @@ const struct GameObject *track_get_game_objects(const struct Track *track, uintp
 
 void track_register_property(struct Track *track, const char *id, struct ValueProperty *property);
 
-const struct ValueProperty *track_get_property(const struct Track *track, const char *id);
+struct ValueProperty *track_get_property(struct Track *track, const char *id);
 
-const struct ValueProperty *track_get_property_by_name(const struct Track *track, PropertyNames id);
+struct ValueProperty *track_get_property_by_name(struct Track *track, PropertyNames id);
 
 PathProperty *track_get_path_property_by_name(struct Track *track, PropertyNames id);
 
@@ -527,7 +532,7 @@ void track_register_path_property(struct Track *track, const char *id, PathPrope
 
 PathProperty *track_get_path_property(struct Track *track, const char *id);
 
-struct CPropertiesMap track_get_properties_map(const struct Track *track);
+struct CPropertiesMap track_get_properties_map(struct Track *track);
 
 struct CPathPropertiesMap track_get_path_properties_map(struct Track *track);
 

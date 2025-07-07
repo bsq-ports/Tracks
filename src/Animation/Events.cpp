@@ -51,8 +51,7 @@ void Events::UpdateCoroutines(BeatmapCallbacksController* callbackController) {
 }
 
 [[nodiscard]]
-Tracks::ffi::EventData* makeEvent(float eventTime, CustomEventAssociatedData const& eventAD,
-                                  TrackW track,
+Tracks::ffi::EventData* makeEvent(float eventTime, CustomEventAssociatedData const& eventAD, TrackW track,
                                   PathPropertyW pathProperty, PointDefinitionW pointData) {
   auto eventType = Tracks::ffi::CEventType {
                   .ty = Tracks::ffi::CEventTypeEnum::AssignPathAnimation,
@@ -75,8 +74,8 @@ Tracks::ffi::EventData* makeEvent(float eventTime, CustomEventAssociatedData con
   return eventData;
 }
 [[nodiscard]]
-Tracks::ffi::EventData* makeEvent(float eventTime, CustomEventAssociatedData const& eventAD,
-                TrackW const& track, PropertyW const& property, PointDefinitionW const& pointData) {
+Tracks::ffi::EventData* makeEvent(float eventTime, CustomEventAssociatedData const& eventAD, TrackW const& track,
+                                  PropertyW const& property, PointDefinitionW const& pointData) {
   auto eventType = Tracks::ffi::CEventType {
                   .ty = Tracks::ffi::CEventTypeEnum::AnimateTrack,
                   .data = {
@@ -94,95 +93,103 @@ Tracks::ffi::EventData* makeEvent(float eventTime, CustomEventAssociatedData con
     .point_data_ptr = pointData,
   };
 
+  CRASH_UNLESS(pointData);
   auto eventData = Tracks::ffi::event_data_to_rust(&cEventData);
+  CRASH_UNLESS(eventData);
 
   return eventData;
 }
 void CustomEventCallback(BeatmapCallbacksController* callbackController,
                          CustomJSONData::CustomEventData* customEventData) {
-  PAPER_IL2CPP_CATCH_HANDLER(
-      bool isType = false;
 
-      auto typeHash = customEventData->typeHash;
+  bool isType = false;
+
+  auto typeHash = customEventData->typeHash;
 
 #define TYPE_GET(jsonName, varName)                                                                                    \
   static auto jsonNameHash_##varName = std::hash<std::string_view>()(jsonName);                                        \
-  if (!isType && typeHash == (jsonNameHash_##varName)) isType = true;
+  if (!isType && typeHash == (jsonNameHash_##varName)) isType = true
 
-      TYPE_GET("AnimateTrack", AnimateTrack) TYPE_GET("AssignPathAnimation", AssignPathAnimation)
+  TYPE_GET("AnimateTrack", AnimateTrack);
+  TYPE_GET("AssignPathAnimation", AssignPathAnimation);
 
-          if (!isType) { return; }
+  if (!isType) {
+    return;
+  }
 
-      CustomEventAssociatedData const& eventAD = getEventAD(customEventData);
+  CustomEventAssociatedData const& eventAD = getEventAD(customEventData);
 
-      auto* customBeatmapData = il2cpp_utils::cast<CustomJSONData::CustomBeatmapData>(callbackController->_beatmapData);
-      TracksAD::BeatmapAssociatedData& beatmapAD = TracksAD::getBeatmapAD(customBeatmapData->customData);
+  auto* customBeatmapData = il2cpp_utils::cast<CustomJSONData::CustomBeatmapData>(callbackController->_beatmapData);
+  TracksAD::BeatmapAssociatedData& beatmapAD = TracksAD::getBeatmapAD(customBeatmapData->customData);
 
-      // fail safe, idek why this needs to be done smh
-      // CJD you bugger
-      if (!eventAD.parsed) {
-        TLogger::Logger.debug("callbackController {}", fmt::ptr(callbackController));
-        TLogger::Logger.debug("_beatmapData {}", fmt::ptr(callbackController->_beatmapData));
-        TLogger::Logger.debug("customBeatmapData {}", fmt::ptr(customBeatmapData));
+  // fail safe, idek why this needs to be done smh
+  // CJD you bugger
+  if (!eventAD.parsed) {
+    TLogger::Logger.debug("callbackController {}", fmt::ptr(callbackController));
+    TLogger::Logger.debug("_beatmapData {}", fmt::ptr(callbackController->_beatmapData));
+    TLogger::Logger.debug("customBeatmapData {}", fmt::ptr(customBeatmapData));
 
-        if (!beatmapAD.valid) {
-          TLogger::Logger.debug("Beatmap wasn't parsed when event is invoked, what?");
-          TracksAD::readBeatmapDataAD(customBeatmapData);
-        }
+    if (!beatmapAD.valid) {
+      TLogger::Logger.debug("Beatmap wasn't parsed when event is invoked, what?");
+      TracksAD::readBeatmapDataAD(customBeatmapData);
+    }
 
-        LoadTrackEvent(customEventData, beatmapAD, customBeatmapData->v2orEarlier);
-      }
+    LoadTrackEvent(customEventData, beatmapAD, customBeatmapData->v2orEarlier);
+  }
 
-      auto duration = eventAD.duration;
+  auto duration = eventAD.duration;
 
-      if (!TracksStatic::bpmController) {
-        CJDLogger::Logger.fmtLog<Paper::LogLevel::ERR>("BPM CONTROLLER NOT INITIALIZED");
-      }
+  if (!TracksStatic::bpmController) {
+    CJDLogger::Logger.fmtLog<Paper::LogLevel::ERR>("BPM CONTROLLER NOT INITIALIZED");
+  }
 
-      auto bpm = TracksStatic::bpmController->currentBpm; // spawnController->get_currentBpm()
+  auto bpm = TracksStatic::bpmController->currentBpm; // spawnController->get_currentBpm()
 
-      duration = 60.0f * duration / bpm;
+  duration = 60.0f * duration / bpm;
 
-      auto easing = eventAD.easing; auto repeat = eventAD.repeat;
+  auto easing = eventAD.easing;
+  auto repeat = eventAD.repeat;
 
-      bool noDuration = duration == 0 || customEventData->time + (duration * (repeat + 1)) <
-                                             TracksStatic::bpmController->_beatmapCallbacksController->songTime;
+  bool noDuration = duration == 0 || customEventData->time + (duration * (repeat + 1)) <
+                                         TracksStatic::bpmController->_beatmapCallbacksController->songTime;
 
-      auto tracksContext = beatmapAD.internal_tracks_context;
+  auto tracksContext = beatmapAD.internal_tracks_context;
 
-      auto coroutineManager = tracksContext->GetCoroutineManager();
-      auto baseManager = tracksContext->GetBaseProviderContext();
-      auto eventTime = customEventData->time;
-      auto songTime = callbackController->_songTime;
+  auto coroutineManager = tracksContext->GetCoroutineManager();
+  auto baseManager = tracksContext->GetBaseProviderContext();
+  auto eventTime = customEventData->time;
+  auto songTime = callbackController->_songTime;
 
-      for (auto const& track
-           : eventAD.tracks) {
-        switch (eventAD.type) {
-        case EventType::animateTrack: {
-          for (auto const& animateTrackData : eventAD.animateTrackData) {
-            for (auto const& [property, pointData] : animateTrackData.properties) {
 
-              auto event = makeEvent(eventTime, eventAD, track, property, pointData);
-              Tracks::ffi::start_event_coroutine(coroutineManager, bpm, songTime, baseManager, event);
-            }
-          }
-          break;
-        }
-        case EventType::assignPathAnimation: {
-          for (auto const& assignPathAnimationData : eventAD.assignPathAnimation) {
-            for (auto const& [pathProperty, pointData] : assignPathAnimationData.pathProperties) {
-              auto event = makeEvent(eventTime, eventAD, track, pathProperty, pointData);
-              Tracks::ffi::start_event_coroutine(coroutineManager, bpm, songTime, baseManager, event);
-            }
-          }
-          break;
-        }
-        default:
-          break;
+  for (auto const& track : eventAD.tracks) {
+  
+    switch (eventAD.type) {
+    case EventType::animateTrack: {
+      for (auto const& animateTrackData : eventAD.animateTrackData) {
+
+        TLogger::Logger.fmtLog<Paper::LogLevel::INF>("Processing event for track {} with duration {} at time {} properties {}",
+                                                     track.GetName(), duration, eventTime, animateTrackData.properties.size());
+
+        for (auto const& [property, pointData] : animateTrackData.properties) {
+          auto event = makeEvent(eventTime, eventAD, track, property, pointData);
+          Tracks::ffi::start_event_coroutine(coroutineManager, bpm, songTime, baseManager, event);
         }
       }
-
-  )
+      break;
+    }
+    case EventType::assignPathAnimation: {
+      for (auto const& assignPathAnimationData : eventAD.assignPathAnimation) {
+        for (auto const& [pathProperty, pointData] : assignPathAnimationData.pathProperties) {
+          auto event = makeEvent(eventTime, eventAD, track, pathProperty, pointData);
+          Tracks::ffi::start_event_coroutine(coroutineManager, bpm, songTime, baseManager, event);
+        }
+      }
+      break;
+    }
+    default:
+      break;
+    }
+  }
 }
 
 void Events::AddEventCallbacks() {

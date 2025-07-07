@@ -36,6 +36,8 @@ void GameObjectTrackController::Awake() {
 
 void GameObjectTrackController::Start() {
   CJDLogger::Logger.fmtLog<Paper::LogLevel::INF>("Checking data {}", fmt::ptr(data));
+  lastCheckedTime = TimeUnit();
+
   // CRASH_UNLESS(data);
 }
 
@@ -152,10 +154,8 @@ void GameObjectTrackController::UpdateData(bool force) {
   static auto Transform_Scale =
       il2cpp_utils::il2cpp_type_check::FPtrWrapper<&UnityEngine::Transform::set_localScale>::get();
   if (localRotation) {
-
     Transform_LocalRotation(transform, localRotation.value());
     data->RotationUpdate.invoke();
-
   } else if (rotation) {
     Transform_Rotation(transform, rotation.value());
     data->RotationUpdate.invoke();

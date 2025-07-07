@@ -80,7 +80,7 @@ inline static constexpr std::string_view const LEFT_HANDED_ID = "leftHanded";
 
 using TracksVector = sbo::small_vector<TrackW, 1>;
 
-enum class EventType { animateTrack, assignPathAnimation, unknown };
+enum class EventType { unknown, animateTrack, assignPathAnimation };
 
 class TracksContext {
 public:
@@ -192,6 +192,7 @@ public:
 
     auto freeTrack = Tracks::ffi::track_create();
     auto ownedTrack = internal_tracks_context->AddTrack(TrackW(freeTrack, v2));
+    ownedTrack.SetName(name);
     tracks.emplace(name, ownedTrack);
 
     return ownedTrack;
