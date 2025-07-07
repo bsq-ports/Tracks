@@ -6,7 +6,7 @@ fn main() {
         let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
         cbindgen::Builder::new()
-            .with_crate_and_name(crate_dir, "tracks_rs")
+            .with_crate_and_name(&crate_dir, "tracks_rs")
             // .with_parse_deps(true)
             .with_only_target_dependencies(true)
             .with_language(cbindgen::Language::C)

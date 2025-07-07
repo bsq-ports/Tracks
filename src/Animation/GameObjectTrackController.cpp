@@ -110,7 +110,7 @@ void GameObjectTrackController::UpdateData(bool force) {
 
     // after
     rotation = track.GetPropertyNamed(PropertyNames::Rotation).GetQuat(lastCheckedTime);
-    rotation = track.GetPropertyNamed(PropertyNames::LocalRotation).GetQuat(lastCheckedTime);
+    localRotation = track.GetPropertyNamed(PropertyNames::LocalRotation).GetQuat(lastCheckedTime);
     position = track.GetPropertyNamed(PropertyNames::Position).GetVec3(lastCheckedTime);
     localPosition = track.GetPropertyNamed(PropertyNames::LocalPosition).GetVec3(lastCheckedTime);
     scale = track.GetPropertyNamed(PropertyNames::Scale).GetVec3(lastCheckedTime);
