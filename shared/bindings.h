@@ -499,6 +499,8 @@ struct CValueProperty property_get_value(const struct ValueProperty *ptr);
 
 struct CTimeUnit property_get_last_updated(const struct ValueProperty *ptr);
 
+struct CTimeUnit get_time(void);
+
 struct Track *track_create(void);
 
 /**
@@ -542,8 +544,6 @@ void (**track_register_game_object_callback(struct Track *track,
 
 void track_remove_game_object_callback(struct Track *track, void (**callback)(struct GameObject,
                                                                               bool));
-
-struct CTimeUnit get_time(void);
 
 #ifdef __cplusplus
 }  // extern "C"
