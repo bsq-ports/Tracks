@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/QuestPackageManager/QPM.Package/refs/heads/main/qpm.schema.json",
   "version": "0.4.0",
   "sharedDir": "shared",
   "dependenciesDir": "extern",
@@ -17,6 +18,9 @@
       "build": [
         "pwsh ./scripts/build.ps1 --release"
       ],
+      "clean": [
+        "pwsh ./scripts/build.ps1 -clean"
+      ],
       "copy": [
         "pwsh ./scripts/copy.ps1"
       ],
@@ -24,7 +28,7 @@
         "pwsh ./scripts/copy.ps1 --release"
       ]
     },
-    "ndk": "^27.1.12297006",
+    "ndk": "^27.2.12479018",
     "qmodIncludeDirs": [
       "./build",
       "./extern/libs"
@@ -35,14 +39,14 @@
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "^6.1.7",
+      "versionRange": "^6.4.2",
       "additionalData": {
         "extraFiles": []
       }
     },
     {
       "id": "bs-cordl",
-      "versionRange": "^4006.0.0",
+      "versionRange": "4007.*",
       "additionalData": {
         "includeQmod": true
       }
@@ -66,19 +70,19 @@
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.18.0",
+      "versionRange": "^0.18.3",
       "additionalData": {
         "includeQmod": true
       }
     },
     {
       "id": "songcore",
-      "versionRange": "^1.1.20",
+      "versionRange": "^1.1.23",
       "additionalData": {}
     },
     {
       "id": "paper2_scotland2",
-      "versionRange": "^4.6.1",
+      "versionRange": "^4.6.4",
       "additionalData": {}
     }
   ]
