@@ -167,26 +167,26 @@ struct PathPropertyW {
     return property != nullptr;
   }
 
-  Tracks::ffi::WrapBaseValue Interpolate(float time, bool& last, Tracks::ffi::BaseProviderContext* context) const {
-    auto result = Tracks::ffi::path_property_interpolate(property, time, context);
+  Tracks::ffi::WrapBaseValue Interpolate(float time, bool& last) const {
+    auto result = Tracks::ffi::path_property_interpolate(property, time, internal_tracks_context);
     last = result.has_value;
     return result.value;
   }
-  NEVector::Vector3 InterpolateVec3(float time, bool& last, Tracks::ffi::BaseProviderContext* context) const {
-    auto result = Interpolate(time, last, context);
+  NEVector::Vector3 InterpolateVec3(float time, bool& last) const {
+    auto result = Interpolate(time, last);
     return { result.value.vec3.x, result.value.vec3.y, result.value.vec3.z };
   }
-  NEVector::Vector4 InterpolateVec4(float time, bool& last, Tracks::ffi::BaseProviderContext* context) const {
-    auto result = Interpolate(time, last, context);
+  NEVector::Vector4 InterpolateVec4(float time, bool& last) const {
+    auto result = Interpolate(time, last);
     return { result.value.vec4.x, result.value.vec4.y, result.value.vec4.z, result.value.vec4.w };
   }
-  NEVector::Quaternion InterpolateQuat(float time, bool& last, Tracks::ffi::BaseProviderContext* context) const {
-    auto result = Interpolate(time, last, context);
+  NEVector::Quaternion InterpolateQuat(float time, bool& last) const {
+    auto result = Interpolate(time, last);
     return { result.value.quat.x, result.value.quat.y, result.value.quat.z, result.value.quat.w };
   }
 
-  float InterpolateLinear(float time, bool& last, Tracks::ffi::BaseProviderContext* context) const {
-    auto result = Interpolate(time, last, context);
+  float InterpolateLinear(float time, bool& last) const {
+    auto result = Interpolate(time, last);
     return result.value.float_v;
   }
 

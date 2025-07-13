@@ -96,7 +96,7 @@ constexpr static std::vector<Tracks::ffi::WrapBaseValue> getProperties(std::span
 
 [[nodiscard]]
 constexpr static std::vector<Tracks::ffi::WrapBaseValue>
-getPathProperties(std::span<TrackW const> tracks, PropertyNames name, Tracks::ffi::BaseProviderContext* context,
+getPathProperties(std::span<TrackW const> tracks, PropertyNames name,
                   uint64_t time) {
   std::vector<Tracks::ffi::WrapBaseValue> properties;
   bool last = false;
@@ -105,7 +105,7 @@ getPathProperties(std::span<TrackW const> tracks, PropertyNames name, Tracks::ff
   for (auto const& track : tracks) {
     auto property = track.GetPathPropertyNamed(name);
     bool tempLast;
-    auto value = property.Interpolate(time, tempLast, context);
+    auto value = property.Interpolate(time, tempLast);
     last = last && tempLast;
     properties.push_back(value);
   }
@@ -132,14 +132,14 @@ getPathProperties(std::span<TrackW const> tracks, PropertyNames name, Tracks::ff
                                                                                                                        \
   [[nodiscard]]                                                                                                        \
   constexpr static std::vector<ReturnType> getPathProperties##Suffix(                                                  \
-      std::span<TrackW const> tracks, PropertyNames name, Tracks::ffi::BaseProviderContext* context, float time) {  \
+      std::span<TrackW const> tracks, PropertyNames name, float time) {  \
     std::vector<ReturnType> properties;                                                                                \
     bool last = false;                                                                                                 \
     properties.reserve(tracks.size());                                                                                 \
     for (auto const& track : tracks) {                                                                                 \
       auto property = track.GetPathPropertyNamed(name);                                                                \
       bool tempLast;                                                                                                   \
-      auto value = property.Interpolate(time, tempLast, context);                                                      \
+      auto value = property.Interpolate(time, tempLast);                                                      \
       last = last && tempLast;                                                                                         \
       properties.push_back(Conversion(value));                                                                         \
     }                                                                                                                  \
