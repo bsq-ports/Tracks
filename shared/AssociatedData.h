@@ -104,7 +104,7 @@ public:
   operator Tracks::ffi::TracksContext const*() const {
     return internal_tracks_context;
   }
-  operator Tracks::ffi::TracksContext*() {
+  operator Tracks::ffi::TracksContext*() const {
     return internal_tracks_context;
   }
 
@@ -152,7 +152,7 @@ public:
     }
     auto ptr = Tracks::ffi::tracks_context_add_track(internal_tracks_context, track);
 
-    return TrackW(const_cast<Tracks::ffi::Track*>(ptr), track.v2);
+    return TrackW(const_cast<Tracks::ffi::Track*>(ptr), track.v2, internal_tracks_context);
   }
 };
 
@@ -191,7 +191,7 @@ public:
     }
 
     auto freeTrack = Tracks::ffi::track_create();
-    auto ownedTrack = internal_tracks_context->AddTrack(TrackW(freeTrack, v2));
+    auto ownedTrack = internal_tracks_context->AddTrack(TrackW(freeTrack, v2, internal_tracks_context->internal_tracks_context));
     ownedTrack.SetName(name);
     tracks.emplace(name, ownedTrack);
 

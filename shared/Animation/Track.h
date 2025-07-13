@@ -109,8 +109,12 @@ struct PropertyW {
 
   [[nodiscard]] std::optional<NEVector::Quaternion> GetQuat(TimeUnit lastCheckedTime = {}) const {
     auto value = GetValue();
-    if (!value.value.has_value) {return std::nullopt;}
-    if (!hasUpdated(value, lastCheckedTime)) {return std::nullopt;}
+    if (!value.value.has_value) {
+      return std::nullopt;
+    }
+    if (!hasUpdated(value, lastCheckedTime)) {
+      return std::nullopt;
+    }
     if (value.value.value.ty != Tracks::ffi::WrapBaseValueType::Quat) {
       return std::nullopt;
     }
@@ -147,9 +151,12 @@ struct PropertyW {
 
 struct PathPropertyW {
   Tracks::ffi::PathProperty* property;
+  Tracks::ffi::BaseProviderContext* internal_tracks_context;
 
   constexpr PathPropertyW() = default;
-  constexpr PathPropertyW(Tracks::ffi::PathProperty* property) : property(property) {}
+  constexpr PathPropertyW(Tracks::ffi::PathProperty* property,
+                          Tracks::ffi::BaseProviderContext* internal_tracks_context)
+      : property(property), internal_tracks_context(internal_tracks_context) {}
   operator Tracks::ffi::PathProperty*() const {
     return property;
   }
@@ -206,10 +213,12 @@ struct PathPropertyW {
 
 struct TrackW {
   Tracks::ffi::Track* track;
+  Tracks::ffi::TracksContext* internal_tracks_context;
   bool v2;
 
   constexpr TrackW() = default;
-  constexpr TrackW(Tracks::ffi::Track* track, bool v2) : track(track), v2(v2) {}
+  constexpr TrackW(Tracks::ffi::Track* track, bool v2, Tracks::ffi::TracksContext* internal_tracks_context)
+      : track(track), v2(v2), internal_tracks_context(internal_tracks_context) {}
 
   operator Tracks::ffi::Track*() const {
     return track;
@@ -230,11 +239,11 @@ struct TrackW {
 
   [[nodiscard]] PathPropertyW GetPathProperty(std::string_view name) const {
     auto prop = Tracks::ffi::track_get_path_property(track, name.data());
-    return PathPropertyW(prop);
+    return PathPropertyW(prop, Tracks::ffi::tracks_context_get_base_provider_context(internal_tracks_context));
   }
   [[nodiscard]] PathPropertyW GetPathPropertyNamed(Tracks::ffi::PropertyNames name) const {
     auto prop = Tracks::ffi::track_get_path_property_by_name(track, name);
-    return PathPropertyW(prop);
+    return PathPropertyW(prop, Tracks::ffi::tracks_context_get_base_provider_context(internal_tracks_context));
   }
 
   void RegisterGameObject(UnityEngine::GameObject* gameObject) const {
