@@ -228,6 +228,14 @@ struct TrackW {
     return track != nullptr;
   }
 
+  bool operator==(const TrackW& rhs) const {
+    return this->track == rhs.track;
+  }
+
+  bool operator<(const TrackW& rhs) const {
+    return this->track < rhs.track;
+  }
+
   [[nodiscard]] PropertyW GetProperty(std::string_view name) const {
     auto prop = Tracks::ffi::track_get_property(track, name.data());
     return PropertyW(prop);
@@ -248,6 +256,10 @@ struct TrackW {
 
   void RegisterGameObject(UnityEngine::GameObject* gameObject) const {
     Tracks::ffi::track_register_game_object(track, Tracks::ffi::GameObject{ .ptr = gameObject });
+  }
+
+  void UnregisterGameObject(UnityEngine::GameObject* gameObject) const {
+    Tracks::ffi::track_unregister_game_object(track, Tracks::ffi::GameObject{ .ptr = gameObject });
   }
 
   // very nasty
@@ -322,3 +334,15 @@ struct TrackW {
     return std::span<UnityEngine::GameObject* const>(castedPtr, count);
   }
 };
+
+namespace std {
+    template <>
+    struct hash<TrackW> {
+        size_t operator()(const TrackW& obj) const {
+            Tracks::ffi::Track* track = obj;
+            size_t track_hash = std::hash<Tracks::ffi::Track*>()(track);
+
+            return track_hash;
+        }
+    };
+}
