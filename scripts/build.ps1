@@ -22,9 +22,9 @@ if (($clean.IsPresent) -or (-not (Test-Path -Path "build")))
 # build the rust code
 cd ./tracks_rs_link
 if ($release.IsPresent) {
-    cargo ndk --no-strip -t arm64-v8a -o build build --release
+    cargo ndk -t arm64-v8a -o build build --release
 } else {
-    cargo ndk --no-strip -t arm64-v8a -o build build
+    cargo ndk -t arm64-v8a -o build build
 }
 cd ..
 
