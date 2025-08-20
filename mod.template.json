@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Lauriethefish/QuestPatcher.QMod/refs/heads/main/QuestPatcher.QMod/Resources/qmod.schema.json",
   "_QPVersion": "0.1.1",
   "name": "Tracks",
   "id": "${mod_id}",
@@ -15,5 +16,6 @@
   ],
   "libraryFiles": [],
   "fileCopies": [],
-  "copyExtensions": []
+  "copyExtensions": [],
+  "isLibrary": 
 }
