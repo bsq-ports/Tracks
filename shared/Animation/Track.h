@@ -208,7 +208,7 @@ struct PathPropertyW {
                                  unwrapped.value.quat.w };
   }
 
-  std::optional<float> InterpolateLinear(float time, bool& last) const {
+  std::optional<float> InterpolateLinear(float time) const {
     auto result = Interpolate(time);
     if (!result) return std::nullopt;
     if (result->ty != Tracks::ffi::WrapBaseValueType::Float) {
