@@ -95,19 +95,16 @@ constexpr static std::vector<Tracks::ffi::WrapBaseValue> getProperties(std::span
 }
 
 [[nodiscard]]
-constexpr static std::vector<Tracks::ffi::WrapBaseValue>
-getPathProperties(std::span<TrackW const> tracks, PropertyNames name,
-                  uint64_t time) {
+constexpr static std::vector<Tracks::ffi::WrapBaseValue> getPathProperties(std::span<TrackW const> tracks,
+                                                                           PropertyNames name, uint64_t time) {
   std::vector<Tracks::ffi::WrapBaseValue> properties;
-  bool last = false;
 
   properties.reserve(tracks.size());
   for (auto const& track : tracks) {
     auto property = track.GetPathPropertyNamed(name);
-    bool tempLast;
-    auto value = property.Interpolate(time, tempLast);
-    last = last && tempLast;
-    properties.push_back(value);
+    auto value = property.Interpolate(time);
+    if (!value.has_value()) continue;
+    properties.push_back(*value);
   }
 
   return properties;
@@ -131,17 +128,15 @@ getPathProperties(std::span<TrackW const> tracks, PropertyNames name,
   }                                                                                                                    \
                                                                                                                        \
   [[nodiscard]]                                                                                                        \
-  constexpr static std::vector<ReturnType> getPathProperties##Suffix(                                                  \
-      std::span<TrackW const> tracks, PropertyNames name, float time) {  \
+  constexpr static std::vector<ReturnType> getPathProperties##Suffix(std::span<TrackW const> tracks,                   \
+                                                                     PropertyNames name, float time) {                 \
     std::vector<ReturnType> properties;                                                                                \
-    bool last = false;                                                                                                 \
     properties.reserve(tracks.size());                                                                                 \
     for (auto const& track : tracks) {                                                                                 \
       auto property = track.GetPathPropertyNamed(name);                                                                \
-      bool tempLast;                                                                                                   \
-      auto value = property.Interpolate(time, tempLast);                                                      \
-      last = last && tempLast;                                                                                         \
-      properties.push_back(Conversion(value));                                                                         \
+      auto value = property.Interpolate(time);                                                                         \
+      if (!value.has_value()) continue;                                                                                \
+      properties.push_back(Conversion(*value));                                                                        \
     }                                                                                                                  \
     return properties;                                                                                                 \
   }
@@ -153,27 +148,27 @@ GENERATE_PROPERTY_GETTERS(NEVector::Quaternion, Quat, ToQuaternion)
 GENERATE_PROPERTY_GETTERS(float, Float, ToFloat)
 
 // Macro to generate addition functions for spans
-#define GENERATE_ADD_FUNCTIONS(Type, TypeName)                                                     \
-  [[nodiscard]]                                                                                   \
-  constexpr static Type add##TypeName##s(std::span<Type const> values) {                          \
-    if (values.empty()) return (Type){};                                                            \
-    Type result = values[0];                                                                     \
-    for (size_t i = 1; i < values.size(); ++i) {                                                 \
-      result = result + values[i];                                                               \
-    }                                                                                             \
-    return result;                                                                               \
+#define GENERATE_ADD_FUNCTIONS(Type, TypeName)                                                                         \
+  [[nodiscard]]                                                                                                        \
+  constexpr static Type add##TypeName##s(std::span<Type const> values) {                                               \
+    if (values.empty()) return (Type){};                                                                               \
+    Type result = values[0];                                                                                           \
+    for (size_t i = 1; i < values.size(); ++i) {                                                                       \
+      result = result + values[i];                                                                                     \
+    }                                                                                                                  \
+    return result;                                                                                                     \
   }
 
 // Macro to generate multiplication functions for spans
-#define GENERATE_MUL_FUNCTIONS(Type, TypeName)                                                     \
-  [[nodiscard]]                                                                                   \
-  constexpr static Type multiply##TypeName##s(std::span<Type const> values) {                     \
-    if (values.empty()) return (Type){};                                                            \
-    Type result = values[0];                                                                     \
-    for (size_t i = 1; i < values.size(); ++i) {                                                 \
-      result = result * values[i];                                                               \
-    }                                                                                             \
-    return result;                                                                               \
+#define GENERATE_MUL_FUNCTIONS(Type, TypeName)                                                                         \
+  [[nodiscard]]                                                                                                        \
+  constexpr static Type multiply##TypeName##s(std::span<Type const> values) {                                          \
+    if (values.empty()) return (Type){};                                                                               \
+    Type result = values[0];                                                                                           \
+    for (size_t i = 1; i < values.size(); ++i) {                                                                       \
+      result = result * values[i];                                                                                     \
+    }                                                                                                                  \
+    return result;                                                                                                     \
   }
 
 // Generate addition functions for different types
@@ -194,7 +189,6 @@ GENERATE_MUL_FUNCTIONS(NEVector::Vector3, Vector3)
 GENERATE_MUL_FUNCTIONS(NEVector::Vector4, Vector4)
 GENERATE_MUL_FUNCTIONS(NEVector::Quaternion, Quaternion)
 GENERATE_MUL_FUNCTIONS(float, Float)
-
 
 #pragma endregion // property_utils
 

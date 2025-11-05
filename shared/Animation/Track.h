@@ -167,27 +167,55 @@ struct PathPropertyW {
     return property != nullptr;
   }
 
-  Tracks::ffi::WrapBaseValue Interpolate(float time, bool& last) const {
+  std::optional<Tracks::ffi::WrapBaseValue> Interpolate(float time) const {
     auto result = Tracks::ffi::path_property_interpolate(property, time, internal_tracks_context);
-    last = result.has_value;
+    if (!result.has_value) {
+      return std::nullopt;
+    }
+
     return result.value;
   }
-  NEVector::Vector3 InterpolateVec3(float time, bool& last) const {
-    auto result = Interpolate(time, last);
-    return { result.value.vec3.x, result.value.vec3.y, result.value.vec3.z };
+  std::optional<NEVector::Vector3> InterpolateVec3(float time) const {
+    auto result = Interpolate(time);
+    if (!result) return std::nullopt;
+    auto unwrapped = *result;
+    if (unwrapped.ty != Tracks::ffi::WrapBaseValueType::Vec3) {
+      return std::nullopt;
+    }
+
+    return NEVector::Vector3 { unwrapped.value.vec3.x, unwrapped.value.vec3.y, unwrapped.value.vec3.z };
   }
-  NEVector::Vector4 InterpolateVec4(float time, bool& last) const {
-    auto result = Interpolate(time, last);
-    return { result.value.vec4.x, result.value.vec4.y, result.value.vec4.z, result.value.vec4.w };
+  std::optional<NEVector::Vector4> InterpolateVec4(float time) const {
+    auto result = Interpolate(time);
+    if (!result) return std::nullopt;
+    auto unwrapped = *result;
+    if (unwrapped.ty != Tracks::ffi::WrapBaseValueType::Vec4) {
+      return std::nullopt;
+    }
+
+    return NEVector::Vector4 { unwrapped.value.vec4.x, unwrapped.value.vec4.y, unwrapped.value.vec4.z,
+                              unwrapped.value.vec4.w };
   }
-  NEVector::Quaternion InterpolateQuat(float time, bool& last) const {
-    auto result = Interpolate(time, last);
-    return { result.value.quat.x, result.value.quat.y, result.value.quat.z, result.value.quat.w };
+  std::optional<NEVector::Quaternion> InterpolateQuat(float time) const {
+    auto result = Interpolate(time);
+    if (!result) return std::nullopt;
+    auto unwrapped = *result;
+    if (unwrapped.ty != Tracks::ffi::WrapBaseValueType::Quat) {
+      return std::nullopt;
+    }
+
+    return NEVector::Quaternion{ unwrapped.value.quat.x, unwrapped.value.quat.y, unwrapped.value.quat.z,
+                                 unwrapped.value.quat.w };
   }
 
-  float InterpolateLinear(float time, bool& last) const {
-    auto result = Interpolate(time, last);
-    return result.value.float_v;
+  std::optional<float> InterpolateLinear(float time, bool& last) const {
+    auto result = Interpolate(time);
+    if (!result) return std::nullopt;
+    if (result->ty != Tracks::ffi::WrapBaseValueType::Float) {
+      return std::nullopt;
+    }
+
+    return result->value.float_v;
   }
 
   [[nodiscard]] Tracks::ffi::WrapBaseValueType GetType() const {
@@ -228,11 +256,11 @@ struct TrackW {
     return track != nullptr;
   }
 
-  bool operator==(const TrackW& rhs) const {
+  bool operator==(TrackW const& rhs) const {
     return this->track == rhs.track;
   }
 
-  bool operator<(const TrackW& rhs) const {
+  bool operator<(TrackW const& rhs) const {
     return this->track < rhs.track;
   }
 
@@ -336,13 +364,12 @@ struct TrackW {
 };
 
 namespace std {
-    template <>
-    struct hash<TrackW> {
-        size_t operator()(const TrackW& obj) const {
-            Tracks::ffi::Track* track = obj;
-            size_t track_hash = std::hash<Tracks::ffi::Track*>()(track);
+template <> struct hash<TrackW> {
+  size_t operator()(TrackW const& obj) const {
+    Tracks::ffi::Track* track = obj;
+    size_t track_hash = std::hash<Tracks::ffi::Track*>()(track);
 
-            return track_hash;
-        }
-    };
-}
+    return track_hash;
+  }
+};
+} // namespace std
