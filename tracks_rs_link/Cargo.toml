@@ -8,7 +8,7 @@ android_logger = "0.15"
 ctor = "0.4"
 log = "0.4"
 # todo: use version
-tracks_rs = { git = "https://github.com/bsq-ports/tracks-rs.git", branch = "tracks", features = [
+tracks_rs = { git = "https://github.com/bsq-ports/tracks-rs.git", branch = "refactor-again", features = [
     "ffi",
 ] }
 

@@ -222,21 +222,21 @@ struct PathPropertyW {
     return Tracks::ffi::path_property_get_type(property);
   }
 
-  [[nodiscard]] float GetTime() const {
-    return Tracks::ffi::path_property_get_time(property);
-  }
+  // [[nodiscard]] float GetTime() const {
+  //   return Tracks::ffi::path_property_get_time(property);
+  // }
 
-  void SetTime(float time) const {
-    Tracks::ffi::path_property_set_time(property, time);
-  }
+  // void SetTime(float time) const {
+  //   Tracks::ffi::path_property_set_time(property, time);
+  // }
 
-  void Finish() const {
-    Tracks::ffi::path_property_finish(property);
-  }
+  // void Finish() const {
+  //   Tracks::ffi::path_property_finish(property);
+  // }
 
-  void Init(std::optional<PointDefinitionW> newPointData) const {
-    Tracks::ffi::path_property_init(property, newPointData.value_or(PointDefinitionW(nullptr)));
-  }
+  // void Init(std::optional<PointDefinitionW> newPointData) const {
+  //   Tracks::ffi::path_property_init(property, newPointData.value_or(PointDefinitionW(nullptr)));
+  // }
 };
 
 struct TrackW {

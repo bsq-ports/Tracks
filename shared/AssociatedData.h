@@ -6,6 +6,7 @@
 #include "Animation/Animation.h"
 #include "Hash.h"
 #include "Vector.h"
+#include "bindings.h"
 #include "custom-json-data/shared/CustomBeatmapData.h"
 #include "custom-json-data/shared/CustomEventData.h"
 #include <string_view>
@@ -146,13 +147,28 @@ public:
     return PointDefinitionW(pointDefinition, GetBaseProviderContext());
   }
 
-  TrackW AddTrack(TrackW track) const {
+  Tracks::ffi::TrackKeyFFI AddTrack(TrackW track) const {
     if (!internal_tracks_context) {
       throw std::runtime_error("TracksContext is null");
     }
     auto ptr = Tracks::ffi::tracks_context_add_track(internal_tracks_context, track);
 
-    return TrackW(const_cast<Tracks::ffi::Track*>(ptr), track.v2, internal_tracks_context);
+    return ptr;
+  }
+
+  TrackW GetTrack(const Tracks::ffi::TrackKeyFFI& index) const {
+    if (!internal_tracks_context) {
+      throw std::runtime_error("TracksContext is null");
+    }
+    auto track = Tracks::ffi::tracks_context_get_track(internal_tracks_context, index);
+    return TrackW(track, false, internal_tracks_context);
+  }
+
+  Tracks::ffi::TrackKeyFFI GetTrackKey(std::string_view name) const {
+    if (!internal_tracks_context) {
+      throw std::runtime_error("TracksContext is null");
+    }
+    return Tracks::ffi::tracks_context_get_track_key(internal_tracks_context, name.data());
   }
 };
 
@@ -168,7 +184,7 @@ public:
   bool valid = false;
   bool leftHanded = false;
   bool v2;
-  std::unordered_map<std::string, TrackW, string_hash, string_equal> tracks;
+
   std::unordered_map<std::string, rapidjson::Value const*, string_hash, string_equal> pointDefinitionsRaw;
 
   // TODO: Use this to cache instead of Animation::TryGetPointData
@@ -185,13 +201,15 @@ public:
 
   // get or create
   TrackW getTrack(std::string_view name) {
-    auto it = tracks.find(name);
+    auto it = internal_tracks_context->GetTrackKey();
     if (it != tracks.end()) {
       return it->second;
     }
 
     auto freeTrack = Tracks::ffi::track_create();
-    auto ownedTrack = internal_tracks_context->AddTrack(TrackW(freeTrack, v2, internal_tracks_context->internal_tracks_context));
+    auto ownedTrack =
+        internal_tracks_context->AddTrack(TrackW(freeTrack, v2, internal_tracks_context->internal_tracks_context));
+    
     ownedTrack.SetName(name);
     tracks.emplace(name, ownedTrack);
 

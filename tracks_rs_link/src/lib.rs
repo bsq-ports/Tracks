@@ -10,6 +10,11 @@ use std::panic::PanicHookInfo;
 static mut PANIC_CALLBACK: Option<extern "C" fn(*const std::os::raw::c_char)> = None;
 
 /// Set the C function that will be called when a panic occurs
+///
+/// # Safety
+/// - `callback` must be a valid function pointer with the C ABI and remain valid for as long as it may be invoked.
+/// - The callback will be invoked from Rust's panic hook; it should be safe to call from the thread/context the panic hook executes on.
+/// - The caller is responsible for ensuring `callback` is safe to call concurrently if the panic hook can run on multiple threads.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn set_panic_callback(callback: extern "C" fn(*const std::os::raw::c_char)) {
     unsafe {

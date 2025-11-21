@@ -10,17 +10,13 @@ namespace Tracks {
 namespace ffi {
 #endif  // __cplusplus
 
-enum CEventTypeEnum
-#ifdef __cplusplus
-  : uint32_t
-#endif // __cplusplus
- {
-  AnimateTrack = 0,
-  AssignPathAnimation = 1,
-};
-#ifndef __cplusplus
-typedef uint32_t CEventTypeEnum;
-#endif // __cplusplus
+typedef enum WrapBaseValueType {
+  Unknown = -1,
+  Vec3 = 0,
+  Quat = 1,
+  Vec4 = 2,
+  Float = 3,
+} WrapBaseValueType;
 
 typedef enum Functions {
   EaseLinear,
@@ -57,6 +53,18 @@ typedef enum Functions {
   EaseInOutBounce,
 } Functions;
 
+enum CEventTypeEnum
+#ifdef __cplusplus
+  : uint32_t
+#endif // __cplusplus
+ {
+  AnimateTrack = 0,
+  AssignPathAnimation = 1,
+};
+#ifndef __cplusplus
+typedef uint32_t CEventTypeEnum;
+#endif // __cplusplus
+
 /**
  * JSON FFI
  */
@@ -67,6 +75,9 @@ typedef enum JsonValueType {
   Array,
 } JsonValueType;
 
+/**
+ * An enumeration of common property names used in Tracks.
+ */
 enum PropertyNames
 #ifdef __cplusplus
   : uint32_t
@@ -92,18 +103,23 @@ enum PropertyNames
 typedef uint32_t PropertyNames;
 #endif // __cplusplus
 
-typedef enum WrapBaseValueType {
-  Unknown = -1,
-  Vec3 = 0,
-  Quat = 1,
-  Vec4 = 2,
-  Float = 3,
-} WrapBaseValueType;
-
 typedef struct BaseFFIProviderValues BaseFFIProviderValues;
 
+/**
+ * Point definitions are used to describe what happens over the course of an animation,
+ * they are used slightly differently for different properties.
+ * They consist of a collection of points over time.
+ */
 typedef struct BasePointDefinition BasePointDefinition;
 
+/**
+ * Context for base value providers
+ * Holds all the base values that can be accessed
+ * by base value providers
+ *
+ * This context is passed to the value providers
+ * to get the current base values
+ */
 typedef struct BaseProviderContext BaseProviderContext;
 
 typedef struct CoroutineManager CoroutineManager;
@@ -112,13 +128,25 @@ typedef struct EventData EventData;
 
 typedef struct FloatPointDefinition FloatPointDefinition;
 
+/**
+ * A structure to manage interpolation between two point definitions over time.
+ */
 typedef struct PointDefinitionInterpolation PointDefinitionInterpolation;
 
 typedef struct QuaternionPointDefinition QuaternionPointDefinition;
 
+/**
+ * A Track represents a collection of properties and path properties associated with game objects.
+ * It allows registering, retrieving, and managing properties and game objects.
+ */
 typedef struct Track Track;
 
+/**
+ * Context that holds tracks, point definitions, and coroutine manager.
+ */
 typedef struct TracksContext TracksContext;
+
+typedef struct TracksHolder TracksHolder;
 
 typedef struct ValueProperty ValueProperty;
 
@@ -126,22 +154,13 @@ typedef struct Vector3PointDefinition Vector3PointDefinition;
 
 typedef struct Vector4PointDefinition Vector4PointDefinition;
 
-typedef struct PointDefinitionInterpolation PathProperty;
-
-typedef union CEventTypeData {
-  /**
-   * AnimateTrack(ValueProperty)
-   */
-  struct ValueProperty *property;
-  /**
-   * AssignPathAnimation(PathProperty)
-   */
-  PathProperty *path_property;
-} CEventTypeData;
+typedef struct TrackKeyFFI {
+  uint64_t _0;
+} TrackKeyFFI;
 
 typedef struct CEventType {
   CEventTypeEnum ty;
-  union CEventTypeData data;
+  const char *property;
 } CEventType;
 
 typedef struct CEventData {
@@ -150,8 +169,8 @@ typedef struct CEventData {
   uint32_t repeat;
   float start_time;
   struct CEventType event_type;
-  struct Track *track_ptr;
-  const struct BasePointDefinition *point_data_ptr;
+  struct TrackKeyFFI track_key;
+  struct BasePointDefinition *point_data_ptr;
 } CEventData;
 
 typedef struct JsonArray {
@@ -176,11 +195,6 @@ typedef struct WrappedValues {
 } WrappedValues;
 
 typedef struct WrappedValues (*BaseFFIProvider)(const struct BaseProviderContext*, void*);
-
-typedef struct FloatInterpolationResult {
-  float value;
-  bool is_last;
-} FloatInterpolationResult;
 
 typedef struct WrapVec3 {
   float x;
@@ -214,6 +228,16 @@ typedef struct WrapBaseValue {
   union WrapBaseValueUnion value;
 } WrapBaseValue;
 
+typedef struct FloatInterpolationResult {
+  float value;
+  bool is_last;
+} FloatInterpolationResult;
+
+typedef struct QuaternionInterpolationResult {
+  struct WrapQuat value;
+  bool is_last;
+} QuaternionInterpolationResult;
+
 typedef struct Vector3InterpolationResult {
   struct WrapVec3 value;
   bool is_last;
@@ -224,10 +248,7 @@ typedef struct Vector4InterpolationResult {
   bool is_last;
 } Vector4InterpolationResult;
 
-typedef struct QuaternionInterpolationResult {
-  struct WrapQuat value;
-  bool is_last;
-} QuaternionInterpolationResult;
+typedef struct PointDefinitionInterpolation PathProperty;
 
 typedef struct CValueNullable {
   bool has_value;
@@ -290,36 +311,95 @@ struct TracksContext *tracks_context_create(void);
 
 /**
  * Consumes the context and frees its memory.
+ *
+ * # Safety
+ * - `context` must be a pointer previously returned by `tracks_context_create` and not already freed.
+ * - Passing a null pointer is a no-op.
  */
 void tracks_context_destroy(struct TracksContext *context);
 
 /**
- * Consumes the track and moves
- * it into the context. Returns a const pointer to the track.
+ * Consumes the track and moves it into the context. Returns a `TrackKeyFFI` handle.
+ *
+ * # Safety
+ * - `context` must be a valid pointer to a `TracksContext`.
+ * - `track` must be a pointer returned by `track_create` and not already freed; the function takes ownership of the track.
+ * - On failure this function returns a null-equivalent `TrackKeyFFI`.
  */
-const struct Track *tracks_context_add_track(struct TracksContext *context, struct Track *track);
+struct TrackKeyFFI tracks_context_add_track(struct TracksContext *context,
+                                            struct Track *track);
 
 /**
  * Consumes the point definition and moves it into the context.
  * Returns a const pointer to the point definition.
  *
  * If id is null/empty, generates a uuid for the point definition.
+ *
+ * # Safety
+ * - `context` must be a valid pointer to a `TracksContext`.
+ * - `point_def` must be a pointer returned by a point-definition creator and not yet freed; ownership is transferred to the context.
+ * - `id` may be null; when non-null it must be a valid C string.
  */
 const struct BasePointDefinition *tracks_context_add_point_definition(struct TracksContext *context,
                                                                       const char *id,
                                                                       struct BasePointDefinition *point_def);
 
+/**
+ * Get a previously-registered point definition by name and type.
+ *
+ * # Safety
+ * - `context` must be a valid pointer to a `TracksContext`.
+ * - `name` must be a valid C string pointer.
+ */
 const struct BasePointDefinition *tracks_context_get_point_definition(struct TracksContext *context,
                                                                       const char *name,
                                                                       enum WrapBaseValueType ty);
 
-struct Track *tracks_context_get_track_by_name(struct TracksContext *context, const char *name);
+/**
+ * Lookup a track key (handle) by name.
+ *
+ * # Safety
+ * - `context` must be a valid pointer to a `TracksContext`.
+ * - `name` must be a valid C string pointer.
+ */
+struct TrackKeyFFI tracks_context_get_track_key(struct TracksContext *context, const char *name);
 
-struct Track *tracks_context_get_track(struct TracksContext *context, uintptr_t index);
+/**
+ * Get a mutable pointer to a track by `TrackKeyFFI`.
+ *
+ * # Safety
+ * - `context` must be a valid pointer to a `TracksContext`.
+ * - The returned pointer is valid while the track remains registered in the context and has not been removed.
+ */
+struct Track *tracks_context_get_track(struct TracksContext *context,
+                                       struct TrackKeyFFI index);
 
+/**
+ * Get a mutable pointer to the context's `CoroutineManager`.
+ *
+ * # Safety
+ * - `context` must be a valid pointer to a `TracksContext`.
+ * - The returned pointer is valid while the context is alive; do not hold it while mutating the context in ways that could invalidate internal state.
+ */
 struct CoroutineManager *tracks_context_get_coroutine_manager(struct TracksContext *context);
 
+/**
+ * Get a mutable pointer to the context's `BaseProviderContext`.
+ *
+ * # Safety
+ * - `context` must be a valid pointer to a `TracksContext`.
+ * - The returned pointer is valid while the context is alive; do not retain it across mutations of the context.
+ */
 struct BaseProviderContext *tracks_context_get_base_provider_context(struct TracksContext *context);
+
+/**
+ * Get a mutable pointer to the internal `TracksHolder`.
+ *
+ * # Safety
+ * - `context` must be a valid pointer to a `TracksContext`.
+ * - The returned pointer should not be used after the context is freed.
+ */
+struct TracksHolder *tracks_context_get_tracks_holder(struct TracksContext *context);
 
 /**
  * Creates a new CoroutineManager instance and returns a raw pointer to it.
@@ -328,25 +408,42 @@ struct BaseProviderContext *tracks_context_get_base_provider_context(struct Trac
 struct CoroutineManager *create_coroutine_manager(void);
 
 /**
- * Destroys a CoroutineManager instance, freeing its memory.
+ * Destroys a `CoroutineManager` instance, freeing its memory.
+ *
+ * # Safety
+ * - `manager` must be a pointer previously returned by `create_coroutine_manager` and not already freed.
+ * - Passing a null pointer is a no-op.
  */
 void destroy_coroutine_manager(struct CoroutineManager *manager);
 
 /**
- * Starts an event coroutine in the manager. Consumes event_data
+ * Starts an event coroutine in the manager. Consumes `event_data`.
+ *
+ * # Safety
+ * - `manager` must be a valid pointer to a `CoroutineManager`.
+ * - `context` must be a valid pointer to a `BaseProviderContext` for the duration of the call.
+ * - `tracks_holder` must be a valid pointer to a `TracksHolder`.
+ * - `event_data` must be a pointer returned by `event_data_to_rust`; ownership is transferred and it will be freed.
  */
 void start_event_coroutine(struct CoroutineManager *manager,
                            float bpm,
                            float song_time,
                            const struct BaseProviderContext *context,
+                           struct TracksHolder *tracks_holder,
                            struct EventData *event_data);
 
 /**
  * Polls all events in the manager, updating their state based on the current song time.
+ *
+ * # Safety
+ * - `manager` must be a valid pointer to a `CoroutineManager`.
+ * - `context` must be a valid pointer to a `BaseProviderContext`.
+ * - `tracks_holder` must be a valid pointer to a `TracksHolder`.
  */
 void poll_events(struct CoroutineManager *manager,
                  float song_time,
-                 const struct BaseProviderContext *context);
+                 const struct BaseProviderContext *context,
+                 struct TracksHolder *tracks_holder);
 
 /**
  * C-compatible wrapper for easing functions
@@ -365,35 +462,97 @@ enum Functions get_easing_function_by_index(int32_t index);
 int32_t get_easing_function_count(void);
 
 /**
- * Converts a CEventData into a Rust EventData
- * Does not consume the CEventData
- * Returns a raw pointer to the Rust EventData
+ * Converts a `CEventData` into a Rust `EventData`.
+ * Does not consume the input struct; returns an owned pointer to a newly allocated `EventData`.
+ *
+ * # Safety
+ * - `c_event_data` must be a valid, non-null pointer to a `CEventData`.
+ * - Any C strings referenced inside `c_event_data` must be valid null-terminated pointers.
+ * - The returned pointer is owned by the caller and must be freed by calling `event_data_dispose`.
  */
 struct EventData *event_data_to_rust(const struct CEventData *c_event_data);
 
+/**
+ * Dispose of an `EventData` previously returned by `event_data_to_rust`.
+ *
+ * # Safety
+ * - `event_data` must be a pointer previously returned by `event_data_to_rust` and not already freed.
+ * - Passing a null pointer is a no-op.
+ */
 void event_data_dispose(struct EventData *event_data);
 
+/**
+ * Create a JSON number value.
+ *
+ * # Safety
+ * - This function is FFI-safe and returns an owned `FFIJsonValue` by value.
+ */
 struct FFIJsonValue tracks_create_json_number(double value);
 
+/**
+ * Create a JSON string value referencing a C string pointer.
+ *
+ * # Safety
+ * - `value` must be a valid null-terminated C string pointer for the duration of use on the consumer side.
+ * - The returned `FFIJsonValue` stores the pointer as-is; ownership of the string remains with the caller.
+ */
 struct FFIJsonValue tracks_create_json_string(const char *value);
 
-struct FFIJsonValue tracks_create_json_array(const struct FFIJsonValue *elements, uintptr_t length);
+/**
+ * Create a JSON array value by allocating a `JsonArray` that wraps the elements pointer.
+ *
+ * # Safety
+ * - `elements` must point to an array of `FFIJsonValue` of length `length` and remain valid until the caller frees the `FFIJsonValue`.
+ * - The caller is responsible for calling `tracks_free_json_value` to free the leaked `JsonArray`.
+ */
+struct FFIJsonValue tracks_create_json_array(const struct FFIJsonValue *elements,
+                                             uintptr_t length);
 
+/**
+ * Free an `FFIJsonValue` previously produced that may contain heap allocations.
+ *
+ * # Safety
+ * - `json_value` must point to an `FFIJsonValue` produced by the corresponding create functions and not already freed.
+ * - This implementation only frees the top-level `JsonArray` if present; nested structures are not recursively freed.
+ */
 void tracks_free_json_value(struct FFIJsonValue *json_value);
 
+/**
+ * Create a `BaseFFIProviderValues` wrapper from a C function pointer and user value.
+ *
+ * # Safety
+ * - `func` must be a valid pointer to a `BaseFFIProvider` function table and not null.
+ * - `user_value` is passed through as-is and its ownership remains with the caller.
+ */
 struct BaseFFIProviderValues *tracks_make_base_ffi_provider(const BaseFFIProvider *func,
                                                             void *user_value);
 
 /**
  * Dispose the base provider. Consumes
+ * Dispose of a `BaseFFIProviderValues` previously created.
+ *
+ * # Safety
+ * - `func` must be a pointer previously returned by `tracks_make_base_ffi_provider` and not already freed.
  */
 void tracks_dipose_base_ffi_provider(struct BaseFFIProviderValues *func);
 
 /**
  * CONTEXT
+ * Create a `BaseProviderContext` and return a pointer to it.
+ *
+ * # Safety
+ * - The returned pointer is owned by the caller and must be freed with the matching disposal function if provided.
  */
 struct BaseProviderContext *tracks_make_base_provider_context(void);
 
+/**
+ * Set a named base provider's values from a raw float buffer.
+ *
+ * # Safety
+ * - `context` must be a valid pointer to a `BaseProviderContext`.
+ * - `base` must be a valid null-terminated C string.
+ * - `values` must point to `count` contiguous `f32` values.
+ */
 void tracks_set_base_provider(struct BaseProviderContext *context,
                               const char *base,
                               float *values,
@@ -401,147 +560,436 @@ void tracks_set_base_provider(struct BaseProviderContext *context,
                               bool quat);
 
 /**
- *FLOAT POINT DEFINITION
- */
-const struct FloatPointDefinition *tracks_make_float_point_definition(const struct FFIJsonValue *json,
-                                                                      struct BaseProviderContext *context);
-
-struct FloatInterpolationResult tracks_interpolate_float(const struct FloatPointDefinition *point_definition,
-                                                         float time,
-                                                         struct BaseProviderContext *context);
-
-uintptr_t tracks_float_count(const struct FloatPointDefinition *point_definition);
-
-bool tracks_float_has_base_provider(const struct FloatPointDefinition *point_definition);
-
-/**
- *BASE POINT DEFINITION
+ * BASE POINT DEFINITION
+ *
+ * # Safety
+ * - `json` must be a valid pointer to an `FFIJsonValue` or null if not used by the specific constructor.
+ * - `context` must be a valid, non-null pointer to a live `BaseProviderContext` for the duration of this call.
+ * - The returned pointer is owned by the caller and must be freed by calling `base_point_definition_free`.
+ * - This function may panic on invalid input; unwinding across the FFI boundary is undefined behaviour.
  */
 struct BasePointDefinition *tracks_make_base_point_definition(const struct FFIJsonValue *json,
                                                               enum WrapBaseValueType ty,
                                                               struct BaseProviderContext *context);
 
+/**
+ * BASE POINT DEFINITION FREE
+ *
+ * # Safety
+ * - `point_definition` must be a pointer previously returned by `tracks_make_base_point_definition`.
+ * - After calling this function the pointer is invalid and must not be used again.
+ * - Passing a null pointer is allowed and is a no-op.
+ */
+void base_point_definition_free(struct BasePointDefinition *point_definition);
+
+/**
+ * Interpolate a base point definition at a given time.
+ *
+ * # Safety
+ * - `point_definition` must be a valid, non-null pointer to a `BasePointDefinition`.
+ * - `is_last_out` must be a valid, non-null pointer to a `bool` to receive the `is_last` flag.
+ * - `context` must be a valid pointer to `BaseProviderContext` for the duration of the call.
+ * - This function does not take ownership of any pointers passed in.
+ * - Do not rely on the returned `WrapBaseValue` containing any borrowed references; it is an owned value.
+ */
 struct WrapBaseValue tracks_interpolate_base_point_definition(const struct BasePointDefinition *point_definition,
                                                               float time,
                                                               bool *is_last_out,
                                                               struct BaseProviderContext *context);
 
+/**
+ * Return number of points in the point definition.
+ *
+ * Safety:
+ * - `point_definition` must be a valid, non-null pointer to a `BasePointDefinition`.
+ */
 uintptr_t tracks_base_point_definition_count(const struct BasePointDefinition *point_definition);
 
+/**
+ * Check whether the point definition references a base provider.
+ *
+ * Safety:
+ * - `point_definition` must be a valid, non-null pointer to a `BasePointDefinition`.
+ */
 bool tracks_base_point_definition_has_base_provider(const struct BasePointDefinition *point_definition);
 
 /**
- *VECTOR3 POINT DEFINITION
+ * FLOAT POINT DEFINITION
+ *
+ * # Safety
+ * - `json` may be null; if non-null it must point to a valid `FFIJsonValue`.
+ * - `context` must be a valid pointer to a `BaseProviderContext`.
  */
-const struct Vector3PointDefinition *tracks_make_vector3_point_definition(const struct FFIJsonValue *json,
-                                                                          struct BaseProviderContext *context);
-
-struct Vector3InterpolationResult tracks_interpolate_vector3(const struct Vector3PointDefinition *point_definition,
-                                                             float time,
-                                                             struct BaseProviderContext *context);
-
-uintptr_t tracks_vector3_count(const struct Vector3PointDefinition *point_definition);
-
-bool tracks_vector3_has_base_provider(const struct Vector3PointDefinition *point_definition);
+const struct FloatPointDefinition *tracks_make_float_point_definition(const struct FFIJsonValue *json,
+                                                                      struct BaseProviderContext *context);
 
 /**
- *VECTOR4 POINT DEFINITION
+ * Interpolate a float point definition at `time`.
+ *
+ * # Safety
+ * - `point_definition` must be a valid pointer to a `FloatPointDefinition`.
+ * - `context` must be a valid pointer to a `BaseProviderContext`.
  */
-const struct Vector4PointDefinition *tracks_make_vector4_point_definition(const struct FFIJsonValue *json,
-                                                                          struct BaseProviderContext *context);
-
-struct Vector4InterpolationResult tracks_interpolate_vector4(const struct Vector4PointDefinition *point_definition,
-                                                             float time,
-                                                             struct BaseProviderContext *context);
-
-uintptr_t tracks_vector4_count(const struct Vector4PointDefinition *point_definition);
-
-bool tracks_vector4_has_base_provider(const struct Vector4PointDefinition *point_definition);
+struct FloatInterpolationResult tracks_interpolate_float(const struct FloatPointDefinition *point_definition,
+                                                         float time,
+                                                         struct BaseProviderContext *context);
 
 /**
- *QUATERNION POINT DEFINITION
+ * # Safety
+ * - `point_definition` must be a valid pointer to a `FloatPointDefinition`.
+ */
+uintptr_t tracks_float_count(const struct FloatPointDefinition *point_definition);
+
+/**
+ * # Safety
+ * - `point_definition` must be a valid pointer to a `FloatPointDefinition`.
+ */
+bool tracks_float_has_base_provider(const struct FloatPointDefinition *point_definition);
+
+/**
+ * QUATERNION POINT DEFINITION
+ *
+ * # Safety
+ * - `json` may be null; if non-null it must point to a valid `FFIJsonValue`.
+ * - `context` must be a valid pointer to a `BaseProviderContext`.
  */
 const struct QuaternionPointDefinition *tracks_make_quat_point_definition(const struct FFIJsonValue *json,
                                                                           struct BaseProviderContext *context);
 
+/**
+ * Interpolate a Quaternion point definition at `time`.
+ *
+ * # Safety
+ * - `point_definition` must be a valid pointer to a `QuaternionPointDefinition`.
+ * - `context` must be a valid pointer to a `BaseProviderContext`.
+ */
 struct QuaternionInterpolationResult tracks_interpolate_quat(const struct QuaternionPointDefinition *point_definition,
                                                              float time,
                                                              struct BaseProviderContext *context);
 
+/**
+ * # Safety
+ * - `point_definition` must be a valid pointer to a `QuaternionPointDefinition`.
+ */
 uintptr_t tracks_quat_count(const struct QuaternionPointDefinition *point_definition);
 
+/**
+ * # Safety
+ * - `point_definition` must be a valid pointer to a `QuaternionPointDefinition`.
+ */
 bool tracks_quat_has_base_provider(const struct QuaternionPointDefinition *point_definition);
+
+/**
+ * VECTOR3 POINT DEFINITION
+ *
+ * # Safety
+ * - `json` may be null; if non-null it must point to a valid `FFIJsonValue`.
+ * - `context` must be a valid pointer to a `BaseProviderContext`.
+ */
+const struct Vector3PointDefinition *tracks_make_vector3_point_definition(const struct FFIJsonValue *json,
+                                                                          struct BaseProviderContext *context);
+
+/**
+ * Interpolate a Vector3 point definition at `time`.
+ *
+ * # Safety
+ * - `point_definition` must be a valid pointer to a `Vector3PointDefinition`.
+ * - `context` must be a valid pointer to a `BaseProviderContext`.
+ */
+struct Vector3InterpolationResult tracks_interpolate_vector3(const struct Vector3PointDefinition *point_definition,
+                                                             float time,
+                                                             struct BaseProviderContext *context);
+
+/**
+ * # Safety
+ * - `point_definition` must be a valid pointer to a `Vector3PointDefinition`.
+ */
+uintptr_t tracks_vector3_count(const struct Vector3PointDefinition *point_definition);
+
+/**
+ * # Safety
+ * - `point_definition` must be a valid pointer to a `Vector3PointDefinition`.
+ */
+bool tracks_vector3_has_base_provider(const struct Vector3PointDefinition *point_definition);
+
+/**
+ * VECTOR4 POINT DEFINITION
+ *
+ * # Safety
+ * - `json` may be null; if non-null it must point to a valid `FFIJsonValue`.
+ * - `context` must be a valid pointer to a `BaseProviderContext`.
+ */
+const struct Vector4PointDefinition *tracks_make_vector4_point_definition(const struct FFIJsonValue *json,
+                                                                          struct BaseProviderContext *context);
+
+/**
+ * Interpolate a Vector4 point definition at `time`.
+ *
+ * # Safety
+ * - `point_definition` must be a valid pointer to a `Vector4PointDefinition`.
+ * - `context` must be a valid pointer to a `BaseProviderContext`.
+ */
+struct Vector4InterpolationResult tracks_interpolate_vector4(const struct Vector4PointDefinition *point_definition,
+                                                             float time,
+                                                             struct BaseProviderContext *context);
+
+/**
+ * # Safety
+ * - `point_definition` must be a valid pointer to a `Vector4PointDefinition`.
+ */
+uintptr_t tracks_vector4_count(const struct Vector4PointDefinition *point_definition);
+
+/**
+ * # Safety
+ * - `point_definition` must be a valid pointer to a `Vector4PointDefinition`.
+ */
+bool tracks_vector4_has_base_provider(const struct Vector4PointDefinition *point_definition);
 
 PathProperty *path_property_create(void);
 
 void path_property_finish(PathProperty *ptr);
 
-void path_property_init(PathProperty *ptr, const struct BasePointDefinition *new_point_data);
+/**
+ * # Safety
+ * - `ptr` must be a valid pointer to a `PathProperty` created by `path_property_create`.
+ * - After calling this function the `PathProperty` remains owned by the caller; this function only performs finalization.
+ */
+void path_property_init(PathProperty *ptr,
+                        struct BasePointDefinition *new_point_data);
 
 /**
+ * # Safety
+ * - `ptr` must be a valid pointer to a `PathProperty`.
+ * - `new_point_data`, if non-null, must point to a valid `BasePointDefinition` and ownership of its contents may be moved.
  * Consumes the path property and frees its memory.
  */
 void path_property_free(PathProperty *ptr);
 
+/**
+ * # Safety
+ * - `ptr` must be a pointer previously returned by `path_property_create` and not already freed.
+ * - Passing null is a no-op.
+ */
 float path_property_get_time(const PathProperty *ptr);
 
+/**
+ * # Safety
+ * - `ptr` must be a valid pointer to a `PathProperty`.
+ */
 void path_property_set_time(PathProperty *ptr, float time);
 
+/**
+ * # Safety
+ * - `ptr` must be a valid, non-null pointer to a `PathProperty`.
+ */
 struct CValueNullable path_property_interpolate(PathProperty *ptr,
                                                 float time,
                                                 struct BaseProviderContext *context);
 
+/**
+ * # Safety
+ * - `ptr` must be a valid pointer to a `PathProperty`.
+ * - `context` must be a valid pointer to a `BaseProviderContext` for the duration of the call.
+ */
 enum WrapBaseValueType path_property_get_type(const PathProperty *ptr);
 
+/**
+ * # Safety
+ * - `ptr` may be null; if non-null it must point to a valid `PathProperty`.
+ */
 enum WrapBaseValueType property_get_type(const struct ValueProperty *ptr);
 
+/**
+ * # Safety
+ * - `ptr` may be null; if non-null it must point to a valid `ValueProperty`.
+ */
 struct CValueProperty property_get_value(const struct ValueProperty *ptr);
 
+/**
+ * # Safety
+ * - `ptr` may be null; if non-null it must point to a valid `ValueProperty`.
+ */
 struct CTimeUnit property_get_last_updated(const struct ValueProperty *ptr);
 
 struct CTimeUnit get_time(void);
 
+/**
+ * Create a new `Track` and return a raw pointer to it.
+ *
+ * # Safety
+ * - The returned pointer is owned by the caller and must be freed with `track_destroy`.
+ * - The caller must not free the pointer by other means or use it after calling `track_destroy`.
+ * - This function is FFI-safe but the returned pointer is not thread-safe; use from the same thread unless synchronized.
+ */
 struct Track *track_create(void);
 
 /**
  * Consumes the track and frees its memory.
+ * Destroy a `Track` previously returned by `track_create`.
+ *
+ * # Safety
+ * - `track` must be a pointer previously returned by `track_create` and not already freed.
+ * - Passing a null pointer is a no-op.
  */
 void track_destroy(struct Track *track);
 
+/**
+ * Reset a track to its default state.
+ *
+ * # Safety
+ * - `track` must be a valid, non-null pointer to a `Track`.
+ * - This function mutates the pointed-to `Track`.
+ */
+void track_reset(struct Track *track);
+
+/**
+ * Set the name of a track from a C string.
+ *
+ * # Safety
+ * - `track` must be a valid, non-null pointer to a `Track`.
+ * - `name` must be a valid null-terminated C string pointer.
+ * - The function copies the string contents; the caller retains ownership of `name`.
+ */
 void track_set_name(struct Track *track, const char *name);
 
 /**
- * Returns the name of the track as a C string.
- * This leaks memory
+ * Return the name of the track as a newly allocated C string.
+ *
+ * # Safety
+ * - The returned pointer is owned by the caller and MUST be freed using `CString::from_raw` on the caller side when no longer needed.
+ * - The function may return null on error or if `track` is null.
  */
 const char *track_get_name(const struct Track *track);
 
+/**
+ * Register a `GameObject` with the track.
+ *
+ * # Safety
+ * - `track` must be a valid, non-null pointer to a `Track`.
+ * - `game_object` is passed by value; ensure it is valid according to the `GameObject` ABI.
+ */
 void track_register_game_object(struct Track *track, struct GameObject game_object);
 
+/**
+ * Unregister a `GameObject` from the track.
+ *
+ * # Safety
+ * - `track` must be a valid, non-null pointer to a `Track`.
+ * - `game_object` must be a `GameObject` compatible with the track's internal representation.
+ */
 void track_unregister_game_object(struct Track *track, struct GameObject game_object);
 
-const struct GameObject *track_get_game_objects(const struct Track *track, uintptr_t *size);
+/**
+ * Get a pointer to the track's `GameObject` array and write its length to `size`.
+ *
+ * # Safety
+ * - `track` must be a valid, non-null pointer to a `Track`.
+ * - `size` must be a valid, non-null pointer to `usize` and will be written to.
+ * - The returned pointer is valid while the `Track` is alive and not mutated; do not hold it across mutations that can reallocate.
+ */
+const struct GameObject *track_get_game_objects(const struct Track *track,
+                                                uintptr_t *size);
 
+/**
+ * Register a value property with the given id on the track.
+ *
+ * # Safety
+ * - `track` must be a valid, non-null pointer to a `Track`.
+ * - `id` must be a valid null-terminated C string.
+ * - `property` must be a valid pointer to a `ValueProperty`; the function clones the value.
+ */
 void track_register_property(struct Track *track, const char *id, struct ValueProperty *property);
 
-struct ValueProperty *track_get_property(struct Track *track, const char *id);
+/**
+ * Get a mutable pointer to a registered `ValueProperty` by id.
+ *
+ * # Safety
+ * - `track` must be a valid, non-null pointer to a `Track`.
+ * - `id` must be a valid null-terminated C string.
+ * - The returned pointer is valid while the property remains registered and the `Track` is not mutated in a way that invalidates it.
+ */
+struct ValueProperty *track_get_property(struct Track *track,
+                                         const char *id);
 
-struct ValueProperty *track_get_property_by_name(struct Track *track, PropertyNames id);
+/**
+ * Get a mutable pointer to a predefined property by `PropertyNames`.
+ *
+ * # Safety
+ * - `track` must be a valid, non-null pointer to a `Track`.
+ * - The returned pointer is valid while the property remains registered; do not hold it across mutating operations.
+ */
+struct ValueProperty *track_get_property_by_name(struct Track *track,
+                                                 PropertyNames id);
 
+/**
+ * Get a mutable pointer to a predefined path property by `PropertyNames`.
+ *
+ * # Safety
+ * - `track` must be a valid, non-null pointer to a `Track`.
+ */
 PathProperty *track_get_path_property_by_name(struct Track *track, PropertyNames id);
 
-void track_register_path_property(struct Track *track, const char *id, PathProperty *property);
+/**
+ * Register a path property on the track.
+ *
+ * # Safety
+ * - `track` must be a valid pointer to a `Track`.
+ * - `id` must be a valid C string.
+ * - `property` must be a valid pointer to a `PathProperty`; the property value is moved from the pointer.
+ */
+void track_register_path_property(struct Track *track,
+                                  const char *id,
+                                  PathProperty *property);
 
+/**
+ * Get a mutable pointer to a path property by id.
+ *
+ * # Safety
+ * - `track` must be a valid pointer to a `Track`.
+ * - `id` must be a valid C string.
+ */
 PathProperty *track_get_path_property(struct Track *track, const char *id);
 
+/**
+ * Return a `CPropertiesMap` with pointers into the track's registered properties.
+ *
+ * Safety:
+ * - `track` must be a valid, non-null pointer to a `Track`.
+ * - The returned pointers are valid only while the `Track` is alive and not mutated in a way that moves or removes the properties.
+ * - Do not retain these pointers across calls that might mutate the track.
+ */
 struct CPropertiesMap track_get_properties_map(struct Track *track);
 
+/**
+ * Return a `CPathPropertiesMap` with pointers into the track's path properties.
+ *
+ * Safety:
+ * - `track` must be a valid, non-null pointer to a `Track`.
+ * - Returned pointers are valid only while the track's path properties remain in-place.
+ */
 struct CPathPropertiesMap track_get_path_properties_map(struct Track *track);
 
+/**
+ * Register a C callback to be invoked when a game object is added/removed.
+ *
+ * Safety:
+ * - `track` must be a valid pointer to a `Track`.
+ * - `callback` and `user_data` must remain valid for as long as the callback may be invoked.
+ * - The returned pointer is an opaque handle to the stored Rust closure; it must be removed with `track_remove_game_object_callback`.
+ * - The callback is invoked on the Rust side; ensure `callback` is safe to call from Rust execution context.
+ */
 void (**track_register_game_object_callback(struct Track *track,
                                             CGameObjectCallback callback,
                                             void *user_data))(struct GameObject, bool);
 
+/**
+ * Remove a previously registered game object callback.
+ *
+ * Safety:
+ * - `track` must be a valid pointer to a `Track`.
+ * - `callback` must be a pointer previously returned by `track_register_game_object_callback`.
+ * - After calling this function the `callback` pointer must not be used again.
+ */
 void track_remove_game_object_callback(struct Track *track, void (**callback)(struct GameObject,
                                                                               bool));
 

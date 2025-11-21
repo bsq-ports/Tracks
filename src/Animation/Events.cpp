@@ -55,9 +55,7 @@ Tracks::ffi::EventData* makeEvent(float eventTime, CustomEventAssociatedData con
                                   PathPropertyW pathProperty, PointDefinitionW pointData) {
   auto eventType = Tracks::ffi::CEventType {
                   .ty = Tracks::ffi::CEventTypeEnum::AssignPathAnimation,
-                  .data = {
-                    .path_property = pathProperty,
-                  },
+                  .property = pathProperty,
                 };
 
   Tracks::ffi::CEventData cEventData = {
