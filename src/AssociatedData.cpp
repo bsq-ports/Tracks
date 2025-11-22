@@ -38,6 +38,16 @@ inline bool IsStringProperties(std::string_view n) {
          n != REPEAT;
 }
 
+PropertyId toPropertyId(std::string_view name) {
+  using namespace Tracks::ffi;
+  auto propName = Tracks::ffi::string_to_property_name(name.data());
+
+  if (propName != PropertyNames::UnknownPropertyName) {
+    return propName;
+  }
+  return std::string(name);
+}
+
 AnimateTrackData::AnimateTrackData(BeatmapAssociatedData& beatmapAD, rapidjson::Value const& customData, TrackW track) {
   for (auto const& member : customData.GetObject()) {
     char const* name = member.name.GetString();
@@ -50,7 +60,7 @@ AnimateTrackData::AnimateTrackData(BeatmapAssociatedData& beatmapAD, rapidjson::
 
       auto pointData = Animation::TryGetPointData(beatmapAD, customData, name, type);
 
-      this->properties.emplace_back(name, pointData);
+      this->properties.emplace_back(toPropertyId(name), pointData);
     } else {
       TLogger::Logger.warn("Could not find track property with name {}", name);
     }
@@ -68,7 +78,7 @@ AssignPathAnimationData::AssignPathAnimationData(BeatmapAssociatedData& beatmapA
 
         auto pointData = Animation::TryGetPointData(beatmapAD, customData, name, type);
 
-        pathProperties.emplace_back(name, pointData);
+        pathProperties.emplace_back(toPropertyId(name), pointData);
       } else {
         TLogger::Logger.warn("Could not find track path property with name {}", name);
       }

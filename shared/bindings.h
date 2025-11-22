@@ -66,16 +66,6 @@ typedef uint32_t CEventTypeEnum;
 #endif // __cplusplus
 
 /**
- * JSON FFI
- */
-typedef enum JsonValueType {
-  Number,
-  Null,
-  String,
-  Array,
-} JsonValueType;
-
-/**
  * An enumeration of common property names used in Tracks.
  */
 enum PropertyNames
@@ -98,10 +88,26 @@ enum PropertyNames
   FogOffset,
   HeightFogStartY,
   HeightFogHeight,
+  UnknownPropertyName,
 };
 #ifndef __cplusplus
 typedef uint32_t PropertyNames;
 #endif // __cplusplus
+
+typedef enum CEventPropertyIdType {
+  CString = 0,
+  PropertyName = 1,
+} CEventPropertyIdType;
+
+/**
+ * JSON FFI
+ */
+typedef enum JsonValueType {
+  Number,
+  Null,
+  String,
+  Array,
+} JsonValueType;
 
 typedef struct BaseFFIProviderValues BaseFFIProviderValues;
 
@@ -158,9 +164,15 @@ typedef struct TrackKeyFFI {
   uint64_t _0;
 } TrackKeyFFI;
 
+typedef union CEventPropertyId {
+  const char *property_str;
+  PropertyNames property_name;
+} CEventPropertyId;
+
 typedef struct CEventType {
   CEventTypeEnum ty;
-  const char *property;
+  union CEventPropertyId property_id;
+  enum CEventPropertyIdType property_id_type;
 } CEventType;
 
 typedef struct CEventData {
@@ -748,6 +760,8 @@ bool tracks_vector4_has_base_provider(const struct Vector4PointDefinition *point
 PathProperty *path_property_create(void);
 
 void path_property_finish(PathProperty *ptr);
+
+PropertyNames string_to_property_name(const char *ptr);
 
 /**
  * # Safety

@@ -44,8 +44,6 @@ void Events::UpdateCoroutines(BeatmapCallbacksController* callbackController) {
 
   auto& beatmapAD = getBeatmapAD(customBeatmapData->customData);
 
-
-
   auto coroutine = beatmapAD.GetCoroutineManager();
   auto baseManager = beatmapAD.GetBaseProviderContext();
   auto tracksHolder = beatmapAD.GetTracksHolder();
@@ -54,11 +52,23 @@ void Events::UpdateCoroutines(BeatmapCallbacksController* callbackController) {
 }
 
 [[nodiscard]]
-Tracks::ffi::EventData* makePathEvent(float eventTime, CustomEventAssociatedData const& eventAD, Tracks::ffi::TrackKeyFFI track,
-                                  PathPropertyId pathProperty, PointDefinitionW pointData) {
+Tracks::ffi::EventData* makePathEvent(float eventTime, CustomEventAssociatedData const& eventAD,
+                                      Tracks::ffi::TrackKeyFFI track, PathPropertyId pathProperty,
+                                      PointDefinitionW pointData) {
+  auto propertyId = std::holds_alternative<std::string>(pathProperty)
+                                                  ? Tracks::ffi::CEventPropertyId{
+                                                        .property_str = std::get<std::string>(pathProperty).c_str(),
+                                                    }
+                                                  : Tracks::ffi::CEventPropertyId{
+                                                        .property_name = std::get<Tracks::ffi::PropertyNames>(pathProperty),
+                                                    };
+
   auto eventType = Tracks::ffi::CEventType{
     .ty = Tracks::ffi::CEventTypeEnum::AssignPathAnimation,
-    .property = pathProperty.c_str(),
+    .property_id = propertyId,
+    .property_id_type = std::holds_alternative<std::string>(pathProperty)
+                            ? Tracks::ffi::CEventPropertyIdType::CString
+                            : Tracks::ffi::CEventPropertyIdType::PropertyName,
   };
 
   Tracks::ffi::CEventData cEventData = {
@@ -76,11 +86,21 @@ Tracks::ffi::EventData* makePathEvent(float eventTime, CustomEventAssociatedData
 }
 [[nodiscard]]
 Tracks::ffi::EventData* makeAnimateEvent(float eventTime, CustomEventAssociatedData const& eventAD,
-                                  Tracks::ffi::TrackKeyFFI const& track, PropertyId const& property,
-                                  PointDefinitionW const& pointData) {
+                                         Tracks::ffi::TrackKeyFFI const& track, PropertyId const& property,
+                                         PointDefinitionW const& pointData) {
+  auto propertyId = std::holds_alternative<std::string>(property)
+                                                  ? Tracks::ffi::CEventPropertyId{
+                                                        .property_str = std::get<std::string>(property).c_str(),
+                                                    }
+                                                  : Tracks::ffi::CEventPropertyId{
+                                                        .property_name = std::get<Tracks::ffi::PropertyNames>(property),
+                                                    };
+
   auto eventType = Tracks::ffi::CEventType{
     .ty = Tracks::ffi::CEventTypeEnum::AnimateTrack,
-    .property = property.c_str(),
+    .property_id = propertyId,
+    .property_id_type = std::holds_alternative<std::string>(property) ? Tracks::ffi::CEventPropertyIdType::CString
+                                                                      : Tracks::ffi::CEventPropertyIdType::PropertyName,
   };
 
   Tracks::ffi::CEventData cEventData = {
@@ -152,8 +172,6 @@ void CustomEventCallback(BeatmapCallbacksController* callbackController,
 
   bool noDuration = duration == 0 || customEventData->time + (duration * (repeat + 1)) <
                                          TracksStatic::bpmController->_beatmapCallbacksController->songTime;
-
-
 
   auto coroutineManager = beatmapAD.GetCoroutineManager();
   auto baseManager = beatmapAD.GetBaseProviderContext();

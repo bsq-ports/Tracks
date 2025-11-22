@@ -15,7 +15,6 @@
 #include "custom-json-data/shared/CustomBeatmapData.h"
 #include "custom-json-data/shared/CustomEventData.h"
 
-
 namespace UnityEngine {
 class Renderer;
 }
@@ -86,7 +85,6 @@ inline static constexpr std::string_view const LEFT_HANDED_ID = "leftHanded";
 using TracksVector = sbo::small_vector<Tracks::ffi::TrackKeyFFI, 1>;
 
 enum class EventType { unknown, animateTrack, assignPathAnimation };
-
 
 class BeatmapAssociatedData {
 public:
@@ -169,8 +167,8 @@ struct BeatmapObjectAssociatedData {
   TracksVector tracks;
 };
 
-using PropertyId = std::string;
-using PathPropertyId = std::string;
+using PropertyId = std::variant<std::string, Tracks::ffi::PropertyNames>;
+using PathPropertyId = std::variant<std::string, Tracks::ffi::PropertyNames>;
 
 struct AnimateTrackData {
   sbo::small_vector<std::pair<PropertyId, PointDefinitionW>> properties;
