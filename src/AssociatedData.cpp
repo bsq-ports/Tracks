@@ -61,22 +61,29 @@ constexpr static float getFloat(rapidjson::Value const& value) {
 }
 
 [[nodiscard]]
-sbo::small_vector<std::shared_ptr<EventDataW>, 1> makePathEvent(float eventTime, CustomEventAssociatedData const& eventAD,
-                                               BeatmapAssociatedData& beatmapAD, TrackW track,
-                                               Tracks::ffi::TrackKeyFFI trackKey, rapidjson::Value const& customData) {
+sbo::small_vector<std::shared_ptr<EventDataW>, 1>
+makePathEvent(float eventTime, CustomEventAssociatedData const& eventAD, BeatmapAssociatedData& beatmapAD, TrackW track,
+              Tracks::ffi::TrackKeyFFI trackKey, rapidjson::Value const& customData) {
   sbo::small_vector<std::shared_ptr<EventDataW>, 1> events;
 
   for (auto const& member : customData.GetObject()) {
     char const* name = member.name.GetString();
     if (IsStringProperties(name)) {
       auto property = track.GetPathProperty(name);
-      if (property) {
-        auto type = property.GetType();
+      if (!property) {
+        TLogger::Logger.warn("Could not find track path property with name {}", name);
+      }
+      auto type = property.GetType();
 
-        auto pointData = Animation::TryGetPointData(beatmapAD, customData, name, type);
+      auto pointData = Animation::TryGetPointData(beatmapAD, customData, name, type);
 
-        auto propertyId = toPropertyId(name);
-        auto propertyHandle = std::holds_alternative<std::string>(propertyId)
+      if (!pointData) {
+        TLogger::Logger.warn("Could not get point data for property {}", name);
+        continue;
+      }
+
+      auto propertyId = toPropertyId(name);
+      auto propertyHandle = std::holds_alternative<std::string>(propertyId)
                                                   ? Tracks::ffi::CEventPropertyId{
                                                         .property_str = std::get<std::string>(propertyId).c_str(),
                                                     }
@@ -84,28 +91,24 @@ sbo::small_vector<std::shared_ptr<EventDataW>, 1> makePathEvent(float eventTime,
                                                         .property_name = std::get<Tracks::ffi::PropertyNames>(propertyId),
                                                     };
 
-        auto eventType = Tracks::ffi::CEventType{
-          .ty = Tracks::ffi::CEventTypeEnum::AssignPathAnimation,
-          .property_id = propertyHandle,
-          .property_id_type = std::holds_alternative<std::string>(propertyId)
-                                  ? Tracks::ffi::CEventPropertyIdType::CString
-                                  : Tracks::ffi::CEventPropertyIdType::PropertyName,
-        };
+      auto eventType = Tracks::ffi::CEventType{
+        .ty = Tracks::ffi::CEventTypeEnum::AssignPathAnimation,
+        .property_id = propertyHandle,
+        .property_id_type = std::holds_alternative<std::string>(propertyId)
+                                ? Tracks::ffi::CEventPropertyIdType::CString
+                                : Tracks::ffi::CEventPropertyIdType::PropertyName,
+      };
 
-        Tracks::ffi::CEventData cEventData = {
-          .raw_duration = eventAD.duration,
-          .easing = eventAD.easing,
-          .repeat = eventAD.repeat,
-          .start_time = eventTime,
-          .event_type = eventType,
-          .track_key = trackKey,
-          .point_data_ptr = pointData,
-        };
-        auto eventData = Tracks::ffi::event_data_to_rust(&cEventData);
-
-      } else {
-        TLogger::Logger.warn("Could not find track path property with name {}", name);
-      }
+      Tracks::ffi::CEventData cEventData = {
+        .raw_duration = eventAD.duration,
+        .easing = eventAD.easing,
+        .repeat = eventAD.repeat,
+        .start_time = eventTime,
+        .event_type = eventType,
+        .track_key = trackKey,
+        .point_data_ptr = *pointData,
+      };
+      auto eventData = Tracks::ffi::event_data_to_rust(&cEventData);
     }
   }
 
@@ -122,14 +125,22 @@ makeAnimateEvent(float eventTime, CustomEventAssociatedData const& eventAD, Beat
       continue;
     }
     auto property = track.GetProperty(name);
-    if (property) {
-      auto type = property.GetType();
+    if (!property) {
+      TLogger::Logger.warn("Could not find track property with name {}", name);
+      continue;
+    }
+    auto type = property.GetType();
 
-      auto pointData = Animation::TryGetPointData(beatmapAD, customData, name, type);
+    auto pointData = Animation::TryGetPointData(beatmapAD, customData, name, type);
 
-      auto propertyId = toPropertyId(name);
+    if (*pointData) {
+      TLogger::Logger.warn("Could not get point data for property {}", name);
+      continue;
+    }
 
-      auto propertyHandle = std::holds_alternative<std::string>(propertyId)
+    auto propertyId = toPropertyId(name);
+
+    auto propertyHandle = std::holds_alternative<std::string>(propertyId)
                                                   ? Tracks::ffi::CEventPropertyId{
                                                         .property_str = std::get<std::string>(propertyId).c_str(),
                                                     }
@@ -137,32 +148,28 @@ makeAnimateEvent(float eventTime, CustomEventAssociatedData const& eventAD, Beat
                                                         .property_name = std::get<Tracks::ffi::PropertyNames>(propertyId),
                                                     };
 
-      auto eventType = Tracks::ffi::CEventType{
-        .ty = Tracks::ffi::CEventTypeEnum::AnimateTrack,
-        .property_id = propertyHandle,
-        .property_id_type = std::holds_alternative<std::string>(propertyId)
-                                ? Tracks::ffi::CEventPropertyIdType::CString
-                                : Tracks::ffi::CEventPropertyIdType::PropertyName,
-      };
+    auto eventType = Tracks::ffi::CEventType{
+      .ty = Tracks::ffi::CEventTypeEnum::AnimateTrack,
+      .property_id = propertyHandle,
+      .property_id_type = std::holds_alternative<std::string>(propertyId)
+                              ? Tracks::ffi::CEventPropertyIdType::CString
+                              : Tracks::ffi::CEventPropertyIdType::PropertyName,
+    };
 
-      Tracks::ffi::CEventData cEventData = {
-        .raw_duration = eventAD.duration,
-        .easing = eventAD.easing,
-        .repeat = eventAD.repeat,
-        .start_time = eventTime,
-        .event_type = eventType,
-        .track_key = trackKey,
-        .point_data_ptr = pointData,
-      };
+    Tracks::ffi::CEventData cEventData = {
+      .raw_duration = eventAD.duration,
+      .easing = eventAD.easing,
+      .repeat = eventAD.repeat,
+      .start_time = eventTime,
+      .event_type = eventType,
+      .track_key = trackKey,
+      .point_data_ptr = *pointData,
+    };
 
-      CRASH_UNLESS(pointData);
-      auto eventData = Tracks::ffi::event_data_to_rust(&cEventData);
-      CRASH_UNLESS(eventData);
-      events.emplace_back(std::make_shared<EventDataW>(eventData));
-
-    } else {
-      TLogger::Logger.warn("Could not find track property with name {}", name);
-    }
+    CRASH_UNLESS(pointData);
+    auto eventData = Tracks::ffi::event_data_to_rust(&cEventData);
+    CRASH_UNLESS(eventData);
+    events.emplace_back(std::make_shared<EventDataW>(eventData));
   }
 
   return events;

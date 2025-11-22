@@ -2,14 +2,15 @@
 #include "Animation/PointDefinition.h"
 #include "AssociatedData.h"
 #include "TLogger.h"
+#include <optional>
 
 using namespace TracksAD;
 
 namespace Animation {
 
-PointDefinitionW TryGetPointData(BeatmapAssociatedData& beatmapAD, rapidjson::Value const& customData,
+std::optional<PointDefinitionW> TryGetPointData(BeatmapAssociatedData& beatmapAD, rapidjson::Value const& customData,
                                  std::string_view pointName, Tracks::ffi::WrapBaseValueType type) {
-  PointDefinitionW pointData = PointDefinitionW(nullptr);
+  std::optional<PointDefinitionW> pointData;
 
 
   auto customDataItr = customData.FindMember(pointName.data());
@@ -20,19 +21,20 @@ PointDefinitionW TryGetPointData(BeatmapAssociatedData& beatmapAD, rapidjson::Va
 
   switch (pointString.GetType()) {
   case rapidjson::kNullType:
+    TLogger::Logger.warn("Point definition {} is null", pointName);
     return pointData;
   case rapidjson::kStringType: {
     auto id = pointString.GetString();
-    auto existing = beatmapAD.GetPointDefinition(id, type);
-    if (existing) {
+    pointData = beatmapAD.GetPointDefinition(id, type);
+    if (pointData) {
       TLogger::Logger.fmtLog<Paper::LogLevel::INF>("Using existing point definition {} {}", id, (int)type);
-      return existing.value();
+      return pointData;
     }
 
     auto itr = beatmapAD.pointDefinitionsRaw.find(id);
     if (itr == beatmapAD.pointDefinitionsRaw.end()) {
       TLogger::Logger.warn("Could not find point definition {}", pointString.GetString());
-      return pointData;
+      return std::nullopt;
     }
     TLogger::Logger.fmtLog<Paper::LogLevel::INF>("Using point definition {} {}", pointString.GetString(), (int)type);
     auto json = convert_rapidjson(*itr->second);

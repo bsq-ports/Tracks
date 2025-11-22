@@ -3,6 +3,7 @@
 #include "Easings.h"
 #include "Track.h"
 #include "PointDefinition.h"
+#include <optional>
 
 #define TRACKS_LIST_OPERATE_MULTIPLE(target, list, op)                                                                 \
   if (!list.empty()) {                                                                                                 \
@@ -27,7 +28,7 @@ static auto getCurrentTime() {
   return Tracks::ffi::get_time();
 }
 
-PointDefinitionW TryGetPointData(TracksAD::BeatmapAssociatedData& beatmapAD, rapidjson::Value const& customData,
+std::optional<PointDefinitionW> TryGetPointData(TracksAD::BeatmapAssociatedData& beatmapAD, rapidjson::Value const& customData,
                                  std::string_view pointName, Tracks::ffi::WrapBaseValueType type);
 
 #pragma region track_utils
