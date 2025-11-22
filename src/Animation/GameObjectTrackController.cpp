@@ -109,6 +109,8 @@ void GameObjectTrackController::UpdateData(bool force) {
 
   if (tracks.size() == 1) {
     auto track = tracks.front();
+    CRASH_UNLESS(track);
+    CRASH_UNLESS(track.getTrackPtr());
 
     // after
     rotation = track.GetPropertyNamed(PropertyNames::Rotation).GetQuat(lastCheckedTime);
