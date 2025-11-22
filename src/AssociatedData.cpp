@@ -5,6 +5,7 @@
 #include "bindings.h"
 #include "custom-json-data/shared/CustomBeatmapData.h"
 #include "TLogger.h"
+#include "sv/small_vector.h"
 
 using namespace TracksAD;
 
@@ -48,44 +49,6 @@ PropertyId toPropertyId(std::string_view name) {
   return std::string(name);
 }
 
-AnimateTrackData::AnimateTrackData(BeatmapAssociatedData& beatmapAD, rapidjson::Value const& customData, TrackW track) {
-  for (auto const& member : customData.GetObject()) {
-    char const* name = member.name.GetString();
-    if (!IsStringProperties(name)) {
-      continue;
-    }
-    auto property = track.GetProperty(name);
-    if (property) {
-      auto type = property.GetType();
-
-      auto pointData = Animation::TryGetPointData(beatmapAD, customData, name, type);
-
-      this->properties.emplace_back(toPropertyId(name), pointData);
-    } else {
-      TLogger::Logger.warn("Could not find track property with name {}", name);
-    }
-  }
-}
-
-AssignPathAnimationData::AssignPathAnimationData(BeatmapAssociatedData& beatmapAD, rapidjson::Value const& customData,
-                                                 TrackW track) {
-  for (auto const& member : customData.GetObject()) {
-    char const* name = member.name.GetString();
-    if (IsStringProperties(name)) {
-      auto property = track.GetPathProperty(name);
-      if (property) {
-        auto type = property.GetType();
-
-        auto pointData = Animation::TryGetPointData(beatmapAD, customData, name, type);
-
-        pathProperties.emplace_back(toPropertyId(name), pointData);
-      } else {
-        TLogger::Logger.warn("Could not find track path property with name {}", name);
-      }
-    }
-  }
-}
-
 constexpr static float getFloat(rapidjson::Value const& value) {
   switch (value.GetType()) {
   case rapidjson::kStringType:
@@ -97,7 +60,115 @@ constexpr static float getFloat(rapidjson::Value const& value) {
   }
 }
 
-void LoadTrackEvent(CustomJSONData::CustomEventData const* customEventData, TracksAD::BeatmapAssociatedData& beatmapAD,
+[[nodiscard]]
+sbo::small_vector<Tracks::ffi::EventData*, 1>
+makePathEvent(float eventTime, CustomEventAssociatedData const& eventAD, BeatmapAssociatedData& beatmapAD, TrackW track,
+              Tracks::ffi::TrackKeyFFI trackKey, rapidjson::Value const& customData) {
+  sbo::small_vector<Tracks::ffi::EventData*, 1> events;
+
+  for (auto const& member : customData.GetObject()) {
+    char const* name = member.name.GetString();
+    if (IsStringProperties(name)) {
+      auto property = track.GetPathProperty(name);
+      if (property) {
+        auto type = property.GetType();
+
+        auto pointData = Animation::TryGetPointData(beatmapAD, customData, name, type);
+
+        auto propertyId = toPropertyId(name);
+        auto propertyHandle = std::holds_alternative<std::string>(propertyId)
+                                                  ? Tracks::ffi::CEventPropertyId{
+                                                        .property_str = std::get<std::string>(propertyId).c_str(),
+                                                    }
+                                                  : Tracks::ffi::CEventPropertyId{
+                                                        .property_name = std::get<Tracks::ffi::PropertyNames>(propertyId),
+                                                    };
+
+        auto eventType = Tracks::ffi::CEventType{
+          .ty = Tracks::ffi::CEventTypeEnum::AssignPathAnimation,
+          .property_id = propertyHandle,
+          .property_id_type = std::holds_alternative<std::string>(propertyId)
+                                  ? Tracks::ffi::CEventPropertyIdType::CString
+                                  : Tracks::ffi::CEventPropertyIdType::PropertyName,
+        };
+
+        Tracks::ffi::CEventData cEventData = {
+          .raw_duration = eventAD.duration,
+          .easing = eventAD.easing,
+          .repeat = eventAD.repeat,
+          .start_time = eventTime,
+          .event_type = eventType,
+          .track_key = trackKey,
+          .point_data_ptr = pointData,
+        };
+        auto eventData = Tracks::ffi::event_data_to_rust(&cEventData);
+
+      } else {
+        TLogger::Logger.warn("Could not find track path property with name {}", name);
+      }
+    }
+  }
+
+  return events;
+}
+[[nodiscard]]
+sbo::small_vector<Tracks::ffi::EventData*, 1>
+makeAnimateEvent(float eventTime, CustomEventAssociatedData const& eventAD, BeatmapAssociatedData& beatmapAD,
+                 TrackW track, Tracks::ffi::TrackKeyFFI trackKey, rapidjson::Value const& customData) {
+  sbo::small_vector<Tracks::ffi::EventData*, 1> events;
+  for (auto const& member : customData.GetObject()) {
+    char const* name = member.name.GetString();
+    if (!IsStringProperties(name)) {
+      continue;
+    }
+    auto property = track.GetProperty(name);
+    if (property) {
+      auto type = property.GetType();
+
+      auto pointData = Animation::TryGetPointData(beatmapAD, customData, name, type);
+
+      auto propertyId = toPropertyId(name);
+
+      auto propertyHandle = std::holds_alternative<std::string>(propertyId)
+                                                  ? Tracks::ffi::CEventPropertyId{
+                                                        .property_str = std::get<std::string>(propertyId).c_str(),
+                                                    }
+                                                  : Tracks::ffi::CEventPropertyId{
+                                                        .property_name = std::get<Tracks::ffi::PropertyNames>(propertyId),
+                                                    };
+
+      auto eventType = Tracks::ffi::CEventType{
+        .ty = Tracks::ffi::CEventTypeEnum::AnimateTrack,
+        .property_id = propertyHandle,
+        .property_id_type = std::holds_alternative<std::string>(propertyId)
+                                ? Tracks::ffi::CEventPropertyIdType::CString
+                                : Tracks::ffi::CEventPropertyIdType::PropertyName,
+      };
+
+      Tracks::ffi::CEventData cEventData = {
+        .raw_duration = eventAD.duration,
+        .easing = eventAD.easing,
+        .repeat = eventAD.repeat,
+        .start_time = eventTime,
+        .event_type = eventType,
+        .track_key = trackKey,
+        .point_data_ptr = pointData,
+      };
+
+      CRASH_UNLESS(pointData);
+      auto eventData = Tracks::ffi::event_data_to_rust(&cEventData);
+      CRASH_UNLESS(eventData);
+      events.push_back(eventData);
+
+    } else {
+      TLogger::Logger.warn("Could not find track property with name {}", name);
+    }
+  }
+
+  return events;
+}
+
+void LoadTrackEvent(CustomJSONData::CustomEventData* customEventData, TracksAD::BeatmapAssociatedData& beatmapAD,
                     bool v2) {
   auto typeHash = customEventData->typeHash;
 
@@ -147,7 +218,6 @@ void LoadTrackEvent(CustomJSONData::CustomEventData const* customEventData, Trac
     return;
   }
 
-  eventAD.tracks = std::move(tracks);
   auto durationIt =
       eventData.FindMember((v2 ? TracksAD::Constants::V2_DURATION : TracksAD::Constants::DURATION).data());
   auto easingIt = eventData.FindMember((v2 ? TracksAD::Constants::V2_EASING : TracksAD::Constants::EASING).data());
@@ -158,16 +228,20 @@ void LoadTrackEvent(CustomJSONData::CustomEventData const* customEventData, Trac
   eventAD.easing =
       easingIt != eventData.MemberEnd() ? FunctionFromStr(easingIt->value.GetString()) : Functions::EaseLinear;
 
-  for (auto const& trackKey : eventAD.tracks) {
+  for (auto const& trackKey : tracks) {
     auto track = beatmapAD.getTrack(trackKey);
 
     switch (eventAD.type) {
     case EventType::animateTrack: {
-      eventAD.animateTrackData.emplace_back(beatmapAD, eventData, track);
+      for (auto const& e : makeAnimateEvent(customEventData->time, eventAD, beatmapAD, track, trackKey, eventData)) {
+        eventAD.rustEventData.emplace_back(e);
+      }
       break;
     }
     case EventType::assignPathAnimation: {
-      eventAD.assignPathAnimation.emplace_back(beatmapAD, eventData, track);
+      for (auto const& e : makePathEvent(customEventData->time, eventAD, beatmapAD, track, trackKey, eventData)) {
+        eventAD.rustEventData.emplace_back(e);
+      }
       break;
     }
     default:

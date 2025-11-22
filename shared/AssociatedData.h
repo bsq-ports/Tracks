@@ -170,35 +170,21 @@ struct BeatmapObjectAssociatedData {
 using PropertyId = std::variant<std::string, Tracks::ffi::PropertyNames>;
 using PathPropertyId = std::variant<std::string, Tracks::ffi::PropertyNames>;
 
-struct AnimateTrackData {
-  sbo::small_vector<std::pair<PropertyId, PointDefinitionW>> properties;
-
-  AnimateTrackData(BeatmapAssociatedData& beatmapAD, rapidjson::Value const& customData, TrackW trackProperties);
-};
-
-struct AssignPathAnimationData {
-  sbo::small_vector<std::pair<PathPropertyId, PointDefinitionW>> pathProperties;
-
-  AssignPathAnimationData(BeatmapAssociatedData& beatmapAD, rapidjson::Value const& customData,
-                          TrackW trackPathProperties);
-};
 
 struct CustomEventAssociatedData {
   // This can probably be omitted or a set
-  TracksVector tracks;
+  // TracksVector tracks;
   float duration;
   Functions easing;
-  EventType type;
   uint32_t repeat;
-
-  // probably not a set, this might be ordered. Oh how much I hate tracks
-  sbo::small_vector<AnimateTrackData, 1> animateTrackData;
-  sbo::small_vector<AssignPathAnimationData, 1> assignPathAnimation;
+  
+  EventType type;
+  sbo::small_vector<Tracks::ffi::EventData*, 1> rustEventData;
 
   bool parsed = false;
 };
 
-void LoadTrackEvent(CustomJSONData::CustomEventData const* customEventData, TracksAD::BeatmapAssociatedData& beatmapAD,
+void LoadTrackEvent(CustomJSONData::CustomEventData* customEventData, TracksAD::BeatmapAssociatedData& beatmapAD,
                     bool v2);
 void readBeatmapDataAD(CustomJSONData::CustomBeatmapData* beatmapData);
 BeatmapAssociatedData& getBeatmapAD(CustomJSONData::JSONWrapper* customData);
