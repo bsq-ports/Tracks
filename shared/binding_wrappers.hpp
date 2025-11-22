@@ -101,4 +101,25 @@ public:
     return key;
   }
 };
+
+struct EventDataW {
+  Tracks::ffi::EventData* internal_event_data;
+
+  EventDataW(Tracks::ffi::EventData* event_data) : internal_event_data(event_data) {};
+  EventDataW(EventDataW const&) = delete;
+  EventDataW(EventDataW&& o) noexcept : internal_event_data(o.internal_event_data) {
+    o.internal_event_data = nullptr;
+  }
+
+  operator Tracks::ffi::EventData*() const {
+    return internal_event_data;
+  }
+
+  ~EventDataW() {
+    if (internal_event_data) {
+      Tracks::ffi::event_data_dispose(internal_event_data);
+    }
+  }
+
+};
 }

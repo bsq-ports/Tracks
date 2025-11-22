@@ -113,7 +113,7 @@ void CustomEventCallback(BeatmapCallbacksController* callbackController,
   auto songTime = callbackController->_songTime;
 
   for (auto const& event : eventAD.rustEventData) {
-    Tracks::ffi::start_event_coroutine(coroutineManager, bpm, songTime, baseManager, tracksHolder, event);
+    Tracks::ffi::start_event_coroutine(coroutineManager, bpm, songTime, baseManager, tracksHolder, *event);
   }
 }
 

@@ -61,10 +61,10 @@ constexpr static float getFloat(rapidjson::Value const& value) {
 }
 
 [[nodiscard]]
-sbo::small_vector<Tracks::ffi::EventData*, 1>
-makePathEvent(float eventTime, CustomEventAssociatedData const& eventAD, BeatmapAssociatedData& beatmapAD, TrackW track,
-              Tracks::ffi::TrackKeyFFI trackKey, rapidjson::Value const& customData) {
-  sbo::small_vector<Tracks::ffi::EventData*, 1> events;
+sbo::small_vector<std::shared_ptr<EventDataW>, 1> makePathEvent(float eventTime, CustomEventAssociatedData const& eventAD,
+                                               BeatmapAssociatedData& beatmapAD, TrackW track,
+                                               Tracks::ffi::TrackKeyFFI trackKey, rapidjson::Value const& customData) {
+  sbo::small_vector<std::shared_ptr<EventDataW>, 1> events;
 
   for (auto const& member : customData.GetObject()) {
     char const* name = member.name.GetString();
@@ -112,10 +112,10 @@ makePathEvent(float eventTime, CustomEventAssociatedData const& eventAD, Beatmap
   return events;
 }
 [[nodiscard]]
-sbo::small_vector<Tracks::ffi::EventData*, 1>
+sbo::small_vector<std::shared_ptr<EventDataW>, 1>
 makeAnimateEvent(float eventTime, CustomEventAssociatedData const& eventAD, BeatmapAssociatedData& beatmapAD,
                  TrackW track, Tracks::ffi::TrackKeyFFI trackKey, rapidjson::Value const& customData) {
-  sbo::small_vector<Tracks::ffi::EventData*, 1> events;
+  sbo::small_vector<std::shared_ptr<EventDataW>, 1> events;
   for (auto const& member : customData.GetObject()) {
     char const* name = member.name.GetString();
     if (!IsStringProperties(name)) {
@@ -158,7 +158,7 @@ makeAnimateEvent(float eventTime, CustomEventAssociatedData const& eventAD, Beat
       CRASH_UNLESS(pointData);
       auto eventData = Tracks::ffi::event_data_to_rust(&cEventData);
       CRASH_UNLESS(eventData);
-      events.push_back(eventData);
+      events.emplace_back(std::make_shared<EventDataW>(eventData));
 
     } else {
       TLogger::Logger.warn("Could not find track property with name {}", name);
@@ -234,13 +234,13 @@ void LoadTrackEvent(CustomJSONData::CustomEventData* customEventData, TracksAD::
     switch (eventAD.type) {
     case EventType::animateTrack: {
       for (auto const& e : makeAnimateEvent(customEventData->time, eventAD, beatmapAD, track, trackKey, eventData)) {
-        eventAD.rustEventData.emplace_back(e);
+        eventAD.rustEventData.emplace_back(std::move(e));
       }
       break;
     }
     case EventType::assignPathAnimation: {
       for (auto const& e : makePathEvent(customEventData->time, eventAD, beatmapAD, track, trackKey, eventData)) {
-        eventAD.rustEventData.emplace_back(e);
+        eventAD.rustEventData.emplace_back(std::move(e));
       }
       break;
     }

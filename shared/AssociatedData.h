@@ -179,7 +179,7 @@ struct CustomEventAssociatedData {
   uint32_t repeat;
   
   EventType type;
-  sbo::small_vector<Tracks::ffi::EventData*, 1> rustEventData;
+  sbo::small_vector<std::shared_ptr<EventDataW>, 1> rustEventData;
 
   bool parsed = false;
 };
