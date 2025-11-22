@@ -105,9 +105,9 @@ public:
   // TODO: Use this to cache instead of Animation::TryGetPointData
   std::unordered_map<std::string, PointDefinitionW, string_hash, string_equal> pointDefinitions;
 
-  std::optional<PointDefinitionW> getPointDefinition(rapidjson::Value const& val, std::string_view key,
+  inline PointDefinitionW getPointDefinition(rapidjson::Value const& val, std::string_view key,
                                              Tracks::ffi::WrapBaseValueType type) {
-    auto pointData = Animation::TryGetPointData(*this, val, key, type);
+    PointDefinitionW pointData = Animation::TryGetPointData(*this, val, key, type);
 
     return pointData;
   }
