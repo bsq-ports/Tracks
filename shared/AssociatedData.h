@@ -14,6 +14,7 @@
 
 #include "custom-json-data/shared/CustomBeatmapData.h"
 #include "custom-json-data/shared/CustomEventData.h"
+#include "sv/small_vector.h"
 
 namespace UnityEngine {
 class Renderer;
@@ -116,6 +117,15 @@ public:
     ownedTrack.v2 = v2;
 
     return ownedTrack;
+  }
+
+  sbo::small_vector<TrackW> getTracks(TracksVector const& trackKeys) {
+    sbo::small_vector<TrackW> tracks;
+    tracks.reserve(trackKeys.size());
+    for (auto const& trackKey : trackKeys) {
+      tracks.emplace_back(getTrack(trackKey));
+    }
+    return tracks;
   }
 
   // get or create
