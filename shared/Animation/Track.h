@@ -239,54 +239,65 @@ struct PathPropertyW {
   // }
 };
 
+
 struct TrackW {
-  Tracks::ffi::Track* track;
+  Tracks::ffi::TrackKeyFFI track = Tracks::ffi::TrackKeyFFI{ static_cast<uint64_t>(-1) };
   Tracks::ffi::TracksContext* internal_tracks_context;
   bool v2;
 
   constexpr TrackW() = default;
-  constexpr TrackW(Tracks::ffi::Track* track, bool v2, Tracks::ffi::TracksContext* internal_tracks_context)
+  constexpr TrackW(Tracks::ffi::TrackKeyFFI track, bool v2, Tracks::ffi::TracksContext* internal_tracks_context)
       : track(track), v2(v2), internal_tracks_context(internal_tracks_context) {}
 
-  operator Tracks::ffi::Track*() const {
+  operator Tracks::ffi::TrackKeyFFI() const {
     return track;
   }
 
   operator bool() const {
-    return track != nullptr;
+    return track._0 != -1;
   }
 
   bool operator==(TrackW const& rhs) const {
-    return this->track == rhs.track;
+    return this->track._0 == rhs.track._0;
   }
 
   bool operator<(TrackW const& rhs) const {
-    return this->track < rhs.track;
+    return this->track._0 < rhs.track._0;
+  }
+
+  [[nodiscard]] Tracks::ffi::Track* getTrackPtr() const {
+    return Tracks::ffi::tracks_context_get_track(internal_tracks_context, track);
   }
 
   [[nodiscard]] PropertyW GetProperty(std::string_view name) const {
-    auto prop = Tracks::ffi::track_get_property(track, name.data());
+    auto ptr = getTrackPtr();
+    auto prop = Tracks::ffi::track_get_property(ptr, name.data());
     return PropertyW(prop);
   }
   [[nodiscard]] PropertyW GetPropertyNamed(Tracks::ffi::PropertyNames name) const {
-    auto prop = Tracks::ffi::track_get_property_by_name(track, name);
+    auto ptr = getTrackPtr();
+    auto prop = Tracks::ffi::track_get_property_by_name(ptr, name);
     return PropertyW(prop);
   }
 
   [[nodiscard]] PathPropertyW GetPathProperty(std::string_view name) const {
-    auto prop = Tracks::ffi::track_get_path_property(track, name.data());
+    auto ptr = getTrackPtr();
+    auto prop = Tracks::ffi::track_get_path_property(ptr, name.data());
     return PathPropertyW(prop, Tracks::ffi::tracks_context_get_base_provider_context(internal_tracks_context));
   }
   [[nodiscard]] PathPropertyW GetPathPropertyNamed(Tracks::ffi::PropertyNames name) const {
-    auto prop = Tracks::ffi::track_get_path_property_by_name(track, name);
+    auto track = getTrackPtr();
+    auto prop = Tracks::ffi::track_get_path_property_by_name(getTrackPtr(), name);
     return PathPropertyW(prop, Tracks::ffi::tracks_context_get_base_provider_context(internal_tracks_context));
   }
 
   void RegisterGameObject(UnityEngine::GameObject* gameObject) const {
-    Tracks::ffi::track_register_game_object(track, Tracks::ffi::GameObject{ .ptr = gameObject });
+    auto ptr = getTrackPtr();
+    Tracks::ffi::track_register_game_object(ptr, Tracks::ffi::GameObject{ .ptr = gameObject });
   }
 
   void UnregisterGameObject(UnityEngine::GameObject* gameObject) const {
+    auto track = getTrackPtr();
     Tracks::ffi::track_unregister_game_object(track, Tracks::ffi::GameObject{ .ptr = gameObject });
   }
 
@@ -307,6 +318,8 @@ struct TrackW {
 
       (*cb)(gameObject, isNew);
     };
+
+    auto track = getTrackPtr();
     return Tracks::ffi::track_register_game_object_callback(track, wrapper, callbackPtr);
   }
 
@@ -316,21 +329,27 @@ struct TrackW {
     }
 
     auto* callback = reinterpret_cast<void (**)(Tracks::ffi::GameObject, bool)>(callbackPtr);
+
+    auto track = getTrackPtr();
     Tracks::ffi::track_remove_game_object_callback(track, callback);
   }
 
   void RegisterProperty(std::string_view id, PropertyW property) {
+    auto track = getTrackPtr();
     Tracks::ffi::track_register_property(track, id.data(), const_cast<Tracks::ffi::ValueProperty*>(property.property));
   }
   void RegisterPathProperty(std::string_view id, PathPropertyW property) const {
+    auto track = getTrackPtr();
     Tracks::ffi::track_register_path_property(track, id.data(), property);
   }
 
   [[nodiscard]] Tracks::ffi::CPropertiesMap GetPropertiesMap() const {
+    auto track = getTrackPtr();
     return Tracks::ffi::track_get_properties_map(track);
   }
 
   [[nodiscard]] Tracks::ffi::CPathPropertiesMap GetPathPropertiesMap() const {
+    auto track = getTrackPtr();
     return Tracks::ffi::track_get_path_properties_map(track);
   }
 
@@ -340,6 +359,7 @@ struct TrackW {
    * @return std::string_view Return a string view as the original string is leaked from the FFI.
    */
   [[nodiscard]] std::string_view GetName() const {
+    auto track = getTrackPtr();
     return Tracks::ffi::track_get_name(track);
   }
 
@@ -349,6 +369,7 @@ struct TrackW {
    * @param name The name to set
    */
   void SetName(std::string_view name) const {
+    auto track = getTrackPtr();
     Tracks::ffi::track_set_name(track, name.data());
   }
 
@@ -356,6 +377,7 @@ struct TrackW {
     static_assert(sizeof(UnityEngine::GameObject*) == sizeof(Tracks::ffi::GameObject),
                   "Tracks wrapper and GameObject pointer do not match size!");
     std::size_t count = 0;
+    auto track = getTrackPtr();
     auto const* ptr = Tracks::ffi::track_get_game_objects(track, &count);
     auto const* castedPtr = reinterpret_cast<UnityEngine::GameObject* const*>(ptr);
 
@@ -366,8 +388,7 @@ struct TrackW {
 namespace std {
 template <> struct hash<TrackW> {
   size_t operator()(TrackW const& obj) const {
-    Tracks::ffi::Track* track = obj;
-    size_t track_hash = std::hash<Tracks::ffi::Track*>()(track);
+    size_t track_hash = std::hash<uint64_t>()(obj.track._0);
 
     return track_hash;
   }

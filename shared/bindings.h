@@ -321,6 +321,8 @@ extern "C" {
 
 struct TracksContext *tracks_context_create(void);
 
+struct TracksContext *tracks_context_clone(const struct TracksContext *context);
+
 /**
  * Consumes the context and frees its memory.
  *
@@ -435,14 +437,14 @@ void destroy_coroutine_manager(struct CoroutineManager *manager);
  * - `manager` must be a valid pointer to a `CoroutineManager`.
  * - `context` must be a valid pointer to a `BaseProviderContext` for the duration of the call.
  * - `tracks_holder` must be a valid pointer to a `TracksHolder`.
- * - `event_data` must be a pointer returned by `event_data_to_rust`; ownership is transferred and it will be freed.
+ * - `event_data` must be a pointer returned by `event_data_to_rust`. The data is cloned, so the caller retains ownership.
  */
 void start_event_coroutine(struct CoroutineManager *manager,
                            float bpm,
                            float song_time,
                            const struct BaseProviderContext *context,
                            struct TracksHolder *tracks_holder,
-                           struct EventData *event_data);
+                           const struct EventData *event_data);
 
 /**
  * Polls all events in the manager, updating their state based on the current song time.

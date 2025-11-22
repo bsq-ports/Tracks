@@ -75,7 +75,7 @@ public:
     return PointDefinitionW(pointDefinition, GetBaseProviderContext());
   }
 
-  Tracks::ffi::TrackKeyFFI AddTrack(TrackW track) const {
+  Tracks::ffi::TrackKeyFFI AddTrack(Tracks::ffi::Track* track) const {
     if (!internal_tracks_context) {
       throw std::runtime_error("TracksContext is null");
     }
@@ -84,12 +84,12 @@ public:
     return ptr;
   }
 
-  TrackW GetTrack(Tracks::ffi::TrackKeyFFI const& index) const {
+  Tracks::ffi::Track* GetTrack(Tracks::ffi::TrackKeyFFI const& index) const {
     if (!internal_tracks_context) {
       throw std::runtime_error("TracksContext is null");
     }
     auto track = Tracks::ffi::tracks_context_get_track(internal_tracks_context, index);
-    return TrackW(track, false, internal_tracks_context);
+    return track;
   }
 
   std::optional<Tracks::ffi::TrackKeyFFI> GetTrackKey(std::string_view name) const {

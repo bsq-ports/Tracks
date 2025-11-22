@@ -83,7 +83,7 @@ inline static constexpr std::string_view const TIME = "time";
 inline static constexpr std::string_view const LEFT_HANDED_ID = "leftHanded";
 } // namespace Constants
 
-using TracksVector = sbo::small_vector<Tracks::ffi::TrackKeyFFI, 1>;
+using TracksVector = sbo::small_vector<TrackW, 1>;
 
 enum class EventType { unknown, animateTrack, assignPathAnimation };
 
@@ -113,19 +113,7 @@ public:
   }
 
   TrackW getTrack(Tracks::ffi::TrackKeyFFI const& trackKey) {
-    auto ownedTrack = internal_tracks_context->GetTrack(trackKey);
-    ownedTrack.v2 = v2;
-
-    return ownedTrack;
-  }
-
-  sbo::small_vector<TrackW> getTracks(TracksVector const& trackKeys) {
-    sbo::small_vector<TrackW> tracks;
-    tracks.reserve(trackKeys.size());
-    for (auto const& trackKey : trackKeys) {
-      tracks.emplace_back(getTrack(trackKey));
-    }
-    return tracks;
+    return TrackW(trackKey, v2, internal_tracks_context.get()->internal_tracks_context);
   }
 
   // get or create
@@ -136,10 +124,10 @@ public:
     }
 
     auto freeTrack = Tracks::ffi::track_create();
-    auto tracKey =
-        internal_tracks_context->AddTrack(TrackW(freeTrack, v2, internal_tracks_context->internal_tracks_context));
+    auto trackKey =
+        internal_tracks_context->AddTrack(freeTrack);
 
-    auto ownedTrack = getTrack(tracKey);
+    auto ownedTrack = getTrack(trackKey);
     ownedTrack.SetName(name);
 
     return ownedTrack;
