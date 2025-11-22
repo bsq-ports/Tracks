@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 android_logger = "0.15"
-ctor = "0.4"
+ctor = "0.6"
 log = "0.4"
 # todo: use version
 tracks_rs = { git = "https://github.com/bsq-ports/tracks-rs.git",  features = [
