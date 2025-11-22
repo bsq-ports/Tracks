@@ -155,7 +155,7 @@ makeAnimateEvent(float eventTime, CustomEventAssociatedData const& eventAD, Beat
         .point_data_ptr = pointData,
       };
 
-      CRASH_UNLESS(pointData);
+
       auto eventData = Tracks::ffi::event_data_to_rust(&cEventData);
       CRASH_UNLESS(eventData);
       events.emplace_back(std::make_shared<EventDataW>(eventData));
