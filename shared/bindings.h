@@ -170,7 +170,7 @@ typedef struct CEventData {
   float start_time;
   struct CEventType event_type;
   struct TrackKeyFFI track_key;
-  struct BasePointDefinition *point_data_ptr;
+  const struct BasePointDefinition *point_data_ptr;
 } CEventData;
 
 typedef struct JsonArray {
@@ -939,7 +939,7 @@ PathProperty *track_get_path_property_by_name(struct Track *track, PropertyNames
  */
 void track_register_path_property(struct Track *track,
                                   const char *id,
-                                  PathProperty *property);
+                                  const PathProperty *property);
 
 /**
  * Get a mutable pointer to a path property by id.

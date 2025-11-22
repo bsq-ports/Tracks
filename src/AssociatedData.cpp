@@ -2,6 +2,7 @@
 #include "Animation/Animation.h"
 #include "Animation/PointDefinition.h"
 #include "Animation/Track.h"
+#include "bindings.h"
 #include "custom-json-data/shared/CustomBeatmapData.h"
 #include "TLogger.h"
 
@@ -49,7 +50,7 @@ AnimateTrackData::AnimateTrackData(BeatmapAssociatedData& beatmapAD, rapidjson::
 
       auto pointData = Animation::TryGetPointData(beatmapAD, customData, name, type);
 
-      this->properties.emplace_back(property, pointData);
+      this->properties.emplace_back(name, pointData);
     } else {
       TLogger::Logger.warn("Could not find track property with name {}", name);
     }
@@ -67,7 +68,7 @@ AssignPathAnimationData::AssignPathAnimationData(BeatmapAssociatedData& beatmapA
 
         auto pointData = Animation::TryGetPointData(beatmapAD, customData, name, type);
 
-        pathProperties.emplace_back(property, pointData);
+        pathProperties.emplace_back(name, pointData);
       } else {
         TLogger::Logger.warn("Could not find track path property with name {}", name);
       }
@@ -116,7 +117,7 @@ void LoadTrackEvent(CustomJSONData::CustomEventData const* customEventData, Trac
   auto const& trackJSON = eventData[(v2 ? TracksAD::Constants::V2_TRACK : TracksAD::Constants::TRACK).data()];
   unsigned int trackSize = trackJSON.IsArray() ? trackJSON.Size() : 1;
 
-  sbo::small_vector<TrackW, 1> tracks;
+  sbo::small_vector<Tracks::ffi::TrackKeyFFI, 1> tracks;
   tracks.reserve(trackSize);
 
   if (trackJSON.IsArray()) {
@@ -147,7 +148,8 @@ void LoadTrackEvent(CustomJSONData::CustomEventData const* customEventData, Trac
   eventAD.easing =
       easingIt != eventData.MemberEnd() ? FunctionFromStr(easingIt->value.GetString()) : Functions::EaseLinear;
 
-  for (auto const& track : eventAD.tracks) {
+  for (auto const& trackKey : eventAD.tracks) {
+    auto track = beatmapAD.getTrack(trackKey);
 
     switch (eventAD.type) {
     case EventType::animateTrack: {

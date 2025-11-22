@@ -34,8 +34,8 @@ MAKE_HOOK_MATCH(GameplayCoreInstaller_InstallBindings, &GlobalNamespace::Gamepla
   auto customBeatmap = tempCustomBeatmap = customBeatmapOpt.value();
   auto const& beatmapAD = TracksAD::getBeatmapAD(customBeatmap->customData);
 
-  auto const& context = beatmapAD.internal_tracks_context;
-  auto baseProviderContext = context->GetBaseProviderContext();
+
+  auto baseProviderContext = beatmapAD.GetBaseProviderContext();
 
   bool leftHanded = self->_sceneSetupData->playerSpecificSettings->leftHanded;
 
@@ -102,8 +102,8 @@ MAKE_HOOK_MATCH(PlayerTransforms_Update, &GlobalNamespace::PlayerTransforms::Upd
 
   auto const& beatmapAD = TracksAD::getBeatmapAD(tempCustomBeatmap->customData);
 
-  auto const& context = beatmapAD.internal_tracks_context;
-  auto baseProviderContext = context->GetBaseProviderContext();
+
+  auto baseProviderContext = beatmapAD.GetBaseProviderContext();
 
   auto leftHand = self->_leftHandTransform;
   // leftHand = leftHand->parent == nullptr ? leftHand : leftHand->parent;

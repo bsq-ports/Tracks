@@ -10,7 +10,7 @@ namespace Animation {
 PointDefinitionW TryGetPointData(BeatmapAssociatedData& beatmapAD, rapidjson::Value const& customData,
                                  std::string_view pointName, Tracks::ffi::WrapBaseValueType type) {
   PointDefinitionW pointData = PointDefinitionW(nullptr);
-  auto tracksContext = beatmapAD.internal_tracks_context;
+
 
   auto customDataItr = customData.FindMember(pointName.data());
   if (customDataItr == customData.MemberEnd()) {
@@ -23,7 +23,7 @@ PointDefinitionW TryGetPointData(BeatmapAssociatedData& beatmapAD, rapidjson::Va
     return pointData;
   case rapidjson::kStringType: {
     auto id = pointString.GetString();
-    auto existing = tracksContext->GetPointDefinition(id, type);
+    auto existing = beatmapAD.GetPointDefinition(id, type);
     if (existing) {
       TLogger::Logger.fmtLog<Paper::LogLevel::INF>("Using existing point definition {} {}", id, (int)type);
       return existing.value();
@@ -36,17 +36,17 @@ PointDefinitionW TryGetPointData(BeatmapAssociatedData& beatmapAD, rapidjson::Va
     }
     TLogger::Logger.fmtLog<Paper::LogLevel::INF>("Using point definition {} {}", pointString.GetString(), (int)type);
     auto json = convert_rapidjson(*itr->second);
-    auto baseProviderContext = tracksContext->GetBaseProviderContext();
+    auto baseProviderContext = beatmapAD.GetBaseProviderContext();
     auto pointDataAnon = Tracks::ffi::tracks_make_base_point_definition(json, type, baseProviderContext);
-    pointData = tracksContext->AddPointDefinition(id, pointDataAnon);
+    pointData = beatmapAD.AddPointDefinition(id, pointDataAnon);
 
     break;
   }
   default:
     auto json = convert_rapidjson(pointString);
-    auto baseProviderContext = tracksContext->GetBaseProviderContext();
+    auto baseProviderContext = beatmapAD.GetBaseProviderContext();
     auto pointDataAnon = Tracks::ffi::tracks_make_base_point_definition(json, type, baseProviderContext);
-    pointData = tracksContext->AddPointDefinition(std::nullopt, pointDataAnon);
+    pointData = beatmapAD.AddPointDefinition(std::nullopt, pointDataAnon);
   }
 
   return pointData;
