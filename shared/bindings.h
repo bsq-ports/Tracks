@@ -182,6 +182,9 @@ typedef struct CEventData {
   float start_time;
   struct CEventType event_type;
   struct TrackKeyFFI track_key;
+  /**
+   * nullable pointer to BasePointDefinition
+   */
   const struct BasePointDefinition *point_data_ptr;
 } CEventData;
 
