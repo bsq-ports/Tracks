@@ -167,6 +167,12 @@ struct PathPropertyW {
     return property != nullptr;
   }
 
+  [[nodiscard]]
+  float GetTime() const {
+    return Tracks::ffi::path_property_get_time(property);
+  }
+
+  [[nodiscard]]
   std::optional<Tracks::ffi::WrapBaseValue> Interpolate(float time) const {
     auto result = Tracks::ffi::path_property_interpolate(property, time, internal_tracks_context);
     if (!result.has_value) {
@@ -175,6 +181,8 @@ struct PathPropertyW {
 
     return result.value;
   }
+
+  [[nodiscard]]
   std::optional<NEVector::Vector3> InterpolateVec3(float time) const {
     auto result = Interpolate(time);
     if (!result) return std::nullopt;
@@ -185,6 +193,8 @@ struct PathPropertyW {
 
     return NEVector::Vector3 { unwrapped.value.vec3.x, unwrapped.value.vec3.y, unwrapped.value.vec3.z };
   }
+
+  [[nodiscard]]
   std::optional<NEVector::Vector4> InterpolateVec4(float time) const {
     auto result = Interpolate(time);
     if (!result) return std::nullopt;
@@ -196,6 +206,8 @@ struct PathPropertyW {
     return NEVector::Vector4 { unwrapped.value.vec4.x, unwrapped.value.vec4.y, unwrapped.value.vec4.z,
                               unwrapped.value.vec4.w };
   }
+
+  [[nodiscard]]
   std::optional<NEVector::Quaternion> InterpolateQuat(float time) const {
     auto result = Interpolate(time);
     if (!result) return std::nullopt;
@@ -208,6 +220,7 @@ struct PathPropertyW {
                                  unwrapped.value.quat.w };
   }
 
+  [[nodiscard]]
   std::optional<float> InterpolateLinear(float time) const {
     auto result = Interpolate(time);
     if (!result) return std::nullopt;

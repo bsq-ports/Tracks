@@ -89,21 +89,11 @@ void CustomEventCallback(BeatmapCallbacksController* callbackController,
     LoadTrackEvent(customEventData, beatmapAD, customBeatmapData->v2orEarlier);
   }
 
-  auto duration = eventAD.duration;
-
   if (!TracksStatic::bpmController) {
     CJDLogger::Logger.fmtLog<Paper::LogLevel::ERR>("BPM CONTROLLER NOT INITIALIZED");
   }
 
   auto bpm = TracksStatic::bpmController->currentBpm; // spawnController->get_currentBpm()
-
-  duration = 60.0f * duration / bpm;
-
-  auto easing = eventAD.easing;
-  auto repeat = eventAD.repeat;
-
-  bool noDuration = duration == 0 || customEventData->time + (duration * (repeat + 1)) <
-                                         TracksStatic::bpmController->_beatmapCallbacksController->songTime;
 
   auto coroutineManager = beatmapAD.GetCoroutineManager();
   auto baseManager = beatmapAD.GetBaseProviderContext();

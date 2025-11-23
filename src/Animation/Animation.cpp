@@ -34,6 +34,8 @@ PointDefinitionW TryGetPointData(BeatmapAssociatedData& beatmapAD, rapidjson::Va
       TLogger::Logger.warn("Could not find point definition {}", pointString.GetString());
       return pointData;
     }
+
+    // Create new point definition from JSON
     TLogger::Logger.fmtLog<Paper::LogLevel::INF>("Using point definition {} {}", pointString.GetString(), (int)type);
     auto json = convert_rapidjson(*itr->second);
     auto baseProviderContext = beatmapAD.GetBaseProviderContext();
