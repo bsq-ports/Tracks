@@ -34,7 +34,6 @@ MAKE_HOOK_MATCH(GameplayCoreInstaller_InstallBindings, &GlobalNamespace::Gamepla
   auto customBeatmap = tempCustomBeatmap = customBeatmapOpt.value();
   auto const& beatmapAD = TracksAD::getBeatmapAD(customBeatmap->customData);
 
-
   auto baseProviderContext = beatmapAD.GetBaseProviderContext();
 
   bool leftHanded = self->_sceneSetupData->playerSpecificSettings->leftHanded;
@@ -50,46 +49,31 @@ MAKE_HOOK_MATCH(GameplayCoreInstaller_InstallBindings, &GlobalNamespace::Gamepla
   auto baseObstaclesColor = colorScheme->obstaclesColor;
   auto baseSaberAColor = colorScheme->saberAColor;
   auto baseSaberBColor = colorScheme->saberBColor;
-
-  Tracks::ffi::tracks_set_base_provider(baseProviderContext, "baseEnvironmentColor0",
-                                        new float[4]{ baseEnvironmentColor0.r, baseEnvironmentColor0.g,
-                                                      baseEnvironmentColor0.b, baseEnvironmentColor0.a },
-                                        4, false);
-  Tracks::ffi::tracks_set_base_provider(baseProviderContext, "baseEnvironmentColor0Boost",
-                                        new float[4]{ baseEnvironmentColor0Boost.r, baseEnvironmentColor0Boost.g,
-                                                      baseEnvironmentColor0Boost.b, baseEnvironmentColor0Boost.a },
-                                        4, false);
-  Tracks::ffi::tracks_set_base_provider(baseProviderContext, "baseEnvironmentColor1",
-                                        new float[4]{ baseEnvironmentColor1.r, baseEnvironmentColor1.g,
-                                                      baseEnvironmentColor1.b, baseEnvironmentColor1.a },
-                                        4, false);
-  Tracks::ffi::tracks_set_base_provider(baseProviderContext, "baseEnvironmentColor1Boost",
-                                        new float[4]{ baseEnvironmentColor1Boost.r, baseEnvironmentColor1Boost.g,
-                                                      baseEnvironmentColor1Boost.b, baseEnvironmentColor1Boost.a },
-                                        4, false);
-  Tracks::ffi::tracks_set_base_provider(baseProviderContext, "baseEnvironmentColorW",
-                                        new float[4]{ baseEnvironmentColorW.r, baseEnvironmentColorW.g,
-                                                      baseEnvironmentColorW.b, baseEnvironmentColorW.a },
-                                        4, false);
-  Tracks::ffi::tracks_set_base_provider(baseProviderContext, "baseEnvironmentColorWBoost",
-                                        new float[4]{ baseEnvironmentColorWBoost.r, baseEnvironmentColorWBoost.g,
-                                                      baseEnvironmentColorWBoost.b, baseEnvironmentColorWBoost.a },
-                                        4, false);
-  Tracks::ffi::tracks_set_base_provider(
-      baseProviderContext, "baseNote0Color",
-      new float[4]{ baseNoteColor0.r, baseNoteColor0.g, baseNoteColor0.b, baseNoteColor0.a }, 4, false);
-  Tracks::ffi::tracks_set_base_provider(
-      baseProviderContext, "baseNote1Color",
-      new float[4]{ baseNoteColor1.r, baseNoteColor1.g, baseNoteColor1.b, baseNoteColor1.a }, 4, false);
-  Tracks::ffi::tracks_set_base_provider(
-      baseProviderContext, "baseObstaclesColor",
-      new float[4]{ baseObstaclesColor.r, baseObstaclesColor.g, baseObstaclesColor.b, baseObstaclesColor.a }, 4, false);
-  Tracks::ffi::tracks_set_base_provider(
-      baseProviderContext, "baseSaberAColor",
-      new float[4]{ baseSaberAColor.r, baseSaberAColor.g, baseSaberAColor.b, baseSaberAColor.a }, 4, false);
-  Tracks::ffi::tracks_set_base_provider(
-      baseProviderContext, "baseSaberBColor",
-      new float[4]{ baseSaberBColor.r, baseSaberBColor.g, baseSaberBColor.b, baseSaberBColor.a }, 4, false);
+  baseProviderContext->SetVector4Value("baseEnvironmentColor0", { baseEnvironmentColor0.r, baseEnvironmentColor0.g,
+                                                                  baseEnvironmentColor0.b, baseEnvironmentColor0.a });
+  baseProviderContext->SetVector4Value("baseEnvironmentColor0Boost",
+                                       { baseEnvironmentColor0Boost.r, baseEnvironmentColor0Boost.g,
+                                         baseEnvironmentColor0Boost.b, baseEnvironmentColor0Boost.a });
+  baseProviderContext->SetVector4Value("baseEnvironmentColor1", { baseEnvironmentColor1.r, baseEnvironmentColor1.g,
+                                                                  baseEnvironmentColor1.b, baseEnvironmentColor1.a });
+  baseProviderContext->SetVector4Value("baseEnvironmentColor1Boost",
+                                       { baseEnvironmentColor1Boost.r, baseEnvironmentColor1Boost.g,
+                                         baseEnvironmentColor1Boost.b, baseEnvironmentColor1Boost.a });
+  baseProviderContext->SetVector4Value("baseEnvironmentColorW", { baseEnvironmentColorW.r, baseEnvironmentColorW.g,
+                                                                  baseEnvironmentColorW.b, baseEnvironmentColorW.a });
+  baseProviderContext->SetVector4Value("baseEnvironmentColorWBoost",
+                                       { baseEnvironmentColorWBoost.r, baseEnvironmentColorWBoost.g,
+                                         baseEnvironmentColorWBoost.b, baseEnvironmentColorWBoost.a });
+  baseProviderContext->SetVector4Value("baseNote0Color",
+                                       { baseNoteColor0.r, baseNoteColor0.g, baseNoteColor0.b, baseNoteColor0.a });
+  baseProviderContext->SetVector4Value("baseNote1Color",
+                                       { baseNoteColor1.r, baseNoteColor1.g, baseNoteColor1.b, baseNoteColor1.a });
+  baseProviderContext->SetVector4Value(
+      "baseObstaclesColor", { baseObstaclesColor.r, baseObstaclesColor.g, baseObstaclesColor.b, baseObstaclesColor.a });
+  baseProviderContext->SetVector4Value("baseSaberAColor",
+                                       { baseSaberAColor.r, baseSaberAColor.g, baseSaberAColor.b, baseSaberAColor.a });
+  baseProviderContext->SetVector4Value("baseSaberBColor",
+                                       { baseSaberBColor.r, baseSaberBColor.g, baseSaberBColor.b, baseSaberBColor.a });
 }
 
 MAKE_HOOK_MATCH(PlayerTransforms_Update, &GlobalNamespace::PlayerTransforms::Update, void,
@@ -101,7 +85,6 @@ MAKE_HOOK_MATCH(PlayerTransforms_Update, &GlobalNamespace::PlayerTransforms::Upd
   }
 
   auto const& beatmapAD = TracksAD::getBeatmapAD(tempCustomBeatmap->customData);
-
 
   auto baseProviderContext = beatmapAD.GetBaseProviderContext();
 
@@ -127,57 +110,40 @@ MAKE_HOOK_MATCH(PlayerTransforms_Update, &GlobalNamespace::PlayerTransforms::Upd
   auto baseRightHandPosition = rightHand->position;
   auto baseRightHandRotation = rightHand->rotation;
 
-  Tracks::ffi::tracks_set_base_provider(
-      baseProviderContext, "baseHeadLocalPosition",
-      new float[3]{ baseHeadLocalPosition.x, baseHeadLocalPosition.y, baseHeadLocalPosition.z }, 3, false);
-  Tracks::ffi::tracks_set_base_provider(baseProviderContext, "baseHeadLocalRotation",
-                                        new float[4]{ baseHeadLocalRotation.x, baseHeadLocalRotation.y,
-                                                      baseHeadLocalRotation.z, baseHeadLocalRotation.w },
-                                        4, true);
-  Tracks::ffi::tracks_set_base_provider(
-      baseProviderContext, "baseHeadLocalScale",
-      new float[3]{ baseHeadLocalScale.x, baseHeadLocalScale.y, baseHeadLocalScale.z }, 3, false);
-  Tracks::ffi::tracks_set_base_provider(baseProviderContext, "baseHeadPosition",
-                                        new float[3]{ baseHeadPosition.x, baseHeadPosition.y, baseHeadPosition.z }, 3,
-                                        false);
-  Tracks::ffi::tracks_set_base_provider(
-      baseProviderContext, "baseHeadRotation",
-      new float[4]{ baseHeadRotation.x, baseHeadRotation.y, baseHeadRotation.z, baseHeadRotation.w }, 4, true);
-  Tracks::ffi::tracks_set_base_provider(
-      baseProviderContext, "baseLeftHandLocalPosition",
-      new float[3]{ baseLeftHandLocalPosition.x, baseLeftHandLocalPosition.y, baseLeftHandLocalPosition.z }, 3, false);
-  Tracks::ffi::tracks_set_base_provider(baseProviderContext, "baseLeftHandLocalRotation",
-                                        new float[4]{ baseLeftHandLocalRotation.x, baseLeftHandLocalRotation.y,
-                                                      baseLeftHandLocalRotation.z, baseLeftHandLocalRotation.w },
-                                        4, true);
-  Tracks::ffi::tracks_set_base_provider(
-      baseProviderContext, "baseLeftHandLocalScale",
-      new float[3]{ baseLeftHandLocalScale.x, baseLeftHandLocalScale.y, baseLeftHandLocalScale.z }, 3, false);
-  Tracks::ffi::tracks_set_base_provider(
-      baseProviderContext, "baseLeftHandPosition",
-      new float[3]{ baseLeftHandPosition.x, baseLeftHandPosition.y, baseLeftHandPosition.z }, 3, false);
-  Tracks::ffi::tracks_set_base_provider(
-      baseProviderContext, "baseLeftHandRotation",
-      new float[4]{ baseLeftHandRotation.x, baseLeftHandRotation.y, baseLeftHandRotation.z, baseLeftHandRotation.w }, 4,
-      true);
-  Tracks::ffi::tracks_set_base_provider(
-      baseProviderContext, "baseRightHandLocalPosition",
-      new float[3]{ baseRightHandLocalPosition.x, baseRightHandLocalPosition.y, baseRightHandLocalPosition.z }, 3,
-      false);
-  Tracks::ffi::tracks_set_base_provider(baseProviderContext, "baseRightHandLocalRotation",
-                                        new float[4]{ baseRightHandLocalRotation.x, baseRightHandLocalRotation.y,
-                                                      baseRightHandLocalRotation.z, baseRightHandLocalRotation.w },
-                                        4, true);
-  Tracks::ffi::tracks_set_base_provider(
-      baseProviderContext, "baseRightHandLocalScale",
-      new float[3]{ baseRightHandLocalScale.x, baseRightHandLocalScale.y, baseRightHandLocalScale.z }, 3, false);
-  Tracks::ffi::tracks_set_base_provider(
-      baseProviderContext, "baseRightHandPosition",
-      new float[3]{ baseRightHandPosition.x, baseRightHandPosition.y, baseRightHandPosition.z }, 3, false);
-  Tracks::ffi::tracks_set_base_provider(baseProviderContext, "baseRightHandRotation",
-                                        new float[4]{ baseRightHandRotation.x, baseRightHandRotation.y,
-                                                      baseRightHandRotation.z, baseRightHandRotation.w },
-                                        4, true);
+  baseProviderContext->SetVector3Value("baseHeadLocalPosition",
+                                       { baseHeadLocalPosition.x, baseHeadLocalPosition.y, baseHeadLocalPosition.z });
+  baseProviderContext->SetQuatValue("baseHeadLocalRotation", { baseHeadLocalRotation.x, baseHeadLocalRotation.y,
+                                                               baseHeadLocalRotation.z, baseHeadLocalRotation.w });
+  baseProviderContext->SetVector3Value("baseHeadLocalScale",
+                                       { baseHeadLocalScale.x, baseHeadLocalScale.y, baseHeadLocalScale.z });
+  baseProviderContext->SetVector3Value("baseHeadPosition",
+                                       { baseHeadPosition.x, baseHeadPosition.y, baseHeadPosition.z });
+  baseProviderContext->SetQuatValue("baseHeadRotation",
+                                    { baseHeadRotation.x, baseHeadRotation.y, baseHeadRotation.z, baseHeadRotation.w });
+  baseProviderContext->SetVector3Value(
+      "baseLeftHandLocalPosition ",
+      { baseLeftHandLocalPosition.x, baseLeftHandLocalPosition.y, baseLeftHandLocalPosition.z });
+  baseProviderContext->SetQuatValue("baseLeftHandLocalRotation",
+                                    { baseLeftHandLocalRotation.x, baseLeftHandLocalRotation.y,
+                                      baseLeftHandLocalRotation.z, baseLeftHandLocalRotation.w });
+  baseProviderContext->SetVector3Value(
+      "baseLeftHandLocalScale", { baseLeftHandLocalScale.x, baseLeftHandLocalScale.y, baseLeftHandLocalScale.z });
+  baseProviderContext->SetVector3Value("baseLeftHandPosition",
+                                       { baseLeftHandPosition.x, baseLeftHandPosition.y, baseLeftHandPosition.z });
+  baseProviderContext->SetQuatValue("baseLeftHandRotation", { baseLeftHandRotation.x, baseLeftHandRotation.y,
+                                                              baseLeftHandRotation.z, baseLeftHandRotation.w });
+  baseProviderContext->SetVector3Value(
+      "baseRightHandLocalPosition",
+      { baseRightHandLocalPosition.x, baseRightHandLocalPosition.y, baseRightHandLocalPosition.z });
+  baseProviderContext->SetQuatValue("baseRightHandLocalRotation",
+                                    { baseRightHandLocalRotation.x, baseRightHandLocalRotation.y,
+                                      baseRightHandLocalRotation.z, baseRightHandLocalRotation.w });
+  baseProviderContext->SetVector3Value(
+      "baseRightHandLocalScale", { baseRightHandLocalScale.x, baseRightHandLocalScale.y, baseRightHandLocalScale.z });
+  baseProviderContext->SetVector3Value("baseRightHandPosition",
+                                       { baseRightHandPosition.x, baseRightHandPosition.y, baseRightHandPosition.z });
+  baseProviderContext->SetQuatValue("baseRightHandRotation", { baseRightHandRotation.x, baseRightHandRotation.y,
+                                                               baseRightHandRotation.z, baseRightHandRotation.w });
 }
 
 void InstallBaseProviderHooks() {

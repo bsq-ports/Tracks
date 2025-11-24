@@ -27,8 +27,22 @@ static auto getCurrentTime() {
   return Tracks::ffi::get_time();
 }
 
-PointDefinitionW TryGetPointData(TracksAD::BeatmapAssociatedData& beatmapAD, rapidjson::Value const& customData,
-                                 std::string_view pointName, Tracks::ffi::WrapBaseValueType type);
+/**
+ * @brief Parse point definition from custom data. 3 possible cases:
+ * 1. Point definition is a string, look up in beatmap associated data
+ * 2. Point definition is an object/array, create new point definition from it
+ * 3. Point definition is null/invalid, return null point definition
+ *
+ * Point definition is then cached in beatmap associated data
+ *
+ * @param beatmapAD The Beatmap context
+ * @param customData the object containing the point data map e.g `{"_color": [[0,0], [1,1]]}` or `{"_posiiton": "pointDef"}` 
+ * @param customDataKey the key to look for in customData
+ * @param type The type of the point definition e.g float, vec3, quat or vec4
+ * @return PointDefinitionW
+ */
+PointDefinitionW ParsePointData(TracksAD::BeatmapAssociatedData& beatmapAD, rapidjson::Value const& customData,
+                                std::string_view customDataKey, Tracks::ffi::WrapBaseValueType type);
 
 #pragma region track_utils
 
@@ -95,8 +109,8 @@ constexpr static std::vector<Tracks::ffi::WrapBaseValue> getProperties(std::span
 }
 
 [[nodiscard]]
-constexpr static std::vector<Tracks::ffi::WrapBaseValue> getPathProperties(std::span<TrackW const> tracks,
-                                                                           PropertyNames name, uint64_t time) {
+static std::vector<Tracks::ffi::WrapBaseValue> getPathProperties(std::span<TrackW const> tracks, PropertyNames name,
+                                                                 uint64_t time) {
   std::vector<Tracks::ffi::WrapBaseValue> properties;
 
   properties.reserve(tracks.size());
@@ -113,8 +127,8 @@ constexpr static std::vector<Tracks::ffi::WrapBaseValue> getPathProperties(std::
 // Macro to generate type-specific property getters
 #define GENERATE_PROPERTY_GETTERS(ReturnType, Suffix, Conversion)                                                      \
   [[nodiscard]]                                                                                                        \
-  constexpr static std::vector<ReturnType> getProperties##Suffix(std::span<TrackW const> tracks, PropertyNames name,   \
-                                                                 TimeUnit time) {                                      \
+  static std::vector<ReturnType> getProperties##Suffix(std::span<TrackW const> tracks, PropertyNames name,             \
+                                                       TimeUnit time) {                                                \
     std::vector<ReturnType> properties;                                                                                \
     properties.reserve(tracks.size());                                                                                 \
     for (auto const& track : tracks) {                                                                                 \
@@ -128,8 +142,8 @@ constexpr static std::vector<Tracks::ffi::WrapBaseValue> getPathProperties(std::
   }                                                                                                                    \
                                                                                                                        \
   [[nodiscard]]                                                                                                        \
-  constexpr static std::vector<ReturnType> getPathProperties##Suffix(std::span<TrackW const> tracks,                   \
-                                                                     PropertyNames name, float time) {                 \
+  static std::vector<ReturnType> getPathProperties##Suffix(std::span<TrackW const> tracks, PropertyNames name,         \
+                                                           float time) {                                               \
     std::vector<ReturnType> properties;                                                                                \
     properties.reserve(tracks.size());                                                                                 \
     for (auto const& track : tracks) {                                                                                 \

@@ -47,8 +47,7 @@ void Events::UpdateCoroutines(BeatmapCallbacksController* callbackController) {
   auto coroutine = beatmapAD.GetCoroutineManager();
   auto baseManager = beatmapAD.GetBaseProviderContext();
   auto tracksHolder = beatmapAD.GetTracksHolder();
-
-  Tracks::ffi::poll_events(coroutine, songTime, baseManager, tracksHolder);
+  coroutine->PollCoroutines(songTime, *baseManager, *tracksHolder);
 }
 
 void CustomEventCallback(BeatmapCallbacksController* callbackController,
@@ -103,7 +102,7 @@ void CustomEventCallback(BeatmapCallbacksController* callbackController,
   auto songTime = callbackController->_songTime;
 
   for (auto const& event : eventAD.rustEventData) {
-    Tracks::ffi::start_event_coroutine(coroutineManager, bpm, songTime, baseManager, tracksHolder, *event);
+    coroutineManager->StartCoroutine(bpm, songTime, *baseManager, *tracksHolder, *event);
   }
 }
 

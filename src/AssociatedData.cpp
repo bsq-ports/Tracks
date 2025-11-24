@@ -76,7 +76,7 @@ makePathEvent(float eventTime, CustomEventAssociatedData const& eventAD, Beatmap
       }
       auto type = property.GetType();
 
-      auto pointData = Animation::TryGetPointData(beatmapAD, customData, name, type);
+      auto pointData = Animation::ParsePointData(beatmapAD, customData, name, type);
 
       auto propertyId = toPropertyId(name);
       auto propertyHandle = std::holds_alternative<std::string>(propertyId)
@@ -126,7 +126,7 @@ makeAnimateEvent(float eventTime, CustomEventAssociatedData const& eventAD, Beat
     if (property) {
       auto type = property.GetType();
 
-      auto pointData = Animation::TryGetPointData(beatmapAD, customData, name, type);
+      auto pointData = Animation::ParsePointData(beatmapAD, customData, name, type);
 
       auto propertyId = toPropertyId(name);
 
@@ -288,7 +288,7 @@ void readBeatmapDataAD(CustomJSONData::CustomBeatmapData* beatmapData) {
       }
     }
     TLogger::Logger.debug("Setting point definitions");
-    beatmapAD.pointDefinitionsRaw = pointDataManager.pointData;
+    beatmapAD.pointDefinitionsJSON = pointDataManager.pointData;
   }
 
   for (auto* beatmapObjectData : beatmapData->beatmapObjectDatas) {

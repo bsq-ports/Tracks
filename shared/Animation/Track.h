@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
 #include "../Vector.h"
@@ -13,6 +14,7 @@
 #include <chrono>
 
 #include "../bindings.h"
+#include "../binding_wrappers.hpp"
 
 namespace Events {
 struct AnimateTrackContext;
@@ -71,6 +73,7 @@ struct TimeUnit {
   }
 };
 
+/// Owned by TrackW
 struct PropertyW {
   Tracks::ffi::ValueProperty* property;
 
@@ -149,13 +152,13 @@ struct PropertyW {
   }
 };
 
+/// Owned by TrackW
 struct PathPropertyW {
   Tracks::ffi::PathProperty* property;
-  Tracks::ffi::BaseProviderContext* internal_tracks_context;
+  std::shared_ptr<TracksAD::BaseProviderContextW> internal_tracks_context;
 
-  constexpr PathPropertyW() = default;
-  constexpr PathPropertyW(Tracks::ffi::PathProperty* property,
-                          Tracks::ffi::BaseProviderContext* internal_tracks_context)
+  PathPropertyW(Tracks::ffi::PathProperty* property,
+                std::shared_ptr<TracksAD::BaseProviderContextW> internal_tracks_context)
       : property(property), internal_tracks_context(internal_tracks_context) {}
   operator Tracks::ffi::PathProperty*() const {
     return property;
@@ -174,7 +177,7 @@ struct PathPropertyW {
 
   [[nodiscard]]
   std::optional<Tracks::ffi::WrapBaseValue> Interpolate(float time) const {
-    auto result = Tracks::ffi::path_property_interpolate(property, time, internal_tracks_context);
+    auto result = Tracks::ffi::path_property_interpolate(property, time, *this->internal_tracks_context);
     if (!result.has_value) {
       return std::nullopt;
     }
@@ -191,7 +194,7 @@ struct PathPropertyW {
       return std::nullopt;
     }
 
-    return NEVector::Vector3 { unwrapped.value.vec3.x, unwrapped.value.vec3.y, unwrapped.value.vec3.z };
+    return NEVector::Vector3{ unwrapped.value.vec3.x, unwrapped.value.vec3.y, unwrapped.value.vec3.z };
   }
 
   [[nodiscard]]
@@ -203,7 +206,7 @@ struct PathPropertyW {
       return std::nullopt;
     }
 
-    return NEVector::Vector4 { unwrapped.value.vec4.x, unwrapped.value.vec4.y, unwrapped.value.vec4.z,
+    return NEVector::Vector4{ unwrapped.value.vec4.x, unwrapped.value.vec4.y, unwrapped.value.vec4.z,
                               unwrapped.value.vec4.w };
   }
 
@@ -252,18 +255,20 @@ struct PathPropertyW {
   // }
 };
 
-
 struct TrackW {
   Tracks::ffi::TrackKeyFFI track = Tracks::ffi::TrackKeyFFI{ static_cast<uint64_t>(-1) };
-  Tracks::ffi::TracksContext* internal_tracks_context;
+  std::shared_ptr<TracksAD::TracksHolderW> internal_tracks_context;
+  std::shared_ptr<TracksAD::BaseProviderContextW> base_provider_context;
   bool v2;
 
   // using CWrappedCallback = void (* *)(struct Tracks::ffi::GameObject, bool, void*);
   using CWrappedCallback = decltype(Tracks::ffi::track_register_game_object_callback(nullptr, nullptr, nullptr));
 
   constexpr TrackW() = default;
-  constexpr TrackW(Tracks::ffi::TrackKeyFFI track, bool v2, Tracks::ffi::TracksContext* internal_tracks_context)
-      : track(track), v2(v2), internal_tracks_context(internal_tracks_context) {}
+  TrackW(Tracks::ffi::TrackKeyFFI track, bool v2, std::shared_ptr<TracksAD::TracksHolderW> internal_tracks_context,
+         std::shared_ptr<TracksAD::BaseProviderContextW> base_provider_context)
+      : track(track), v2(v2), internal_tracks_context(internal_tracks_context),
+        base_provider_context(base_provider_context) {}
 
   operator Tracks::ffi::TrackKeyFFI() const {
     return track;
@@ -282,7 +287,7 @@ struct TrackW {
   }
 
   [[nodiscard]] Tracks::ffi::Track* getTrackPtr() const {
-    return Tracks::ffi::tracks_context_get_track(internal_tracks_context, track);
+    return Tracks::ffi::tracks_holder_get_track_mut(*internal_tracks_context, track);
   }
 
   [[nodiscard]] PropertyW GetProperty(std::string_view name) const {
@@ -299,12 +304,12 @@ struct TrackW {
   [[nodiscard]] PathPropertyW GetPathProperty(std::string_view name) const {
     auto ptr = getTrackPtr();
     auto prop = Tracks::ffi::track_get_path_property(ptr, name.data());
-    return PathPropertyW(prop, Tracks::ffi::tracks_context_get_base_provider_context(internal_tracks_context));
+    return PathPropertyW(prop, base_provider_context);
   }
   [[nodiscard]] PathPropertyW GetPathPropertyNamed(Tracks::ffi::PropertyNames name) const {
     auto track = getTrackPtr();
     auto prop = Tracks::ffi::track_get_path_property_by_name(getTrackPtr(), name);
-    return PathPropertyW(prop, Tracks::ffi::tracks_context_get_base_provider_context(internal_tracks_context));
+    return PathPropertyW(prop, base_provider_context);
   }
 
   void RegisterGameObject(UnityEngine::GameObject* gameObject) const {
@@ -343,7 +348,6 @@ struct TrackW {
     if (!callback) {
       return;
     }
-
 
     auto track = getTrackPtr();
     Tracks::ffi::track_remove_game_object_callback(track, callback);

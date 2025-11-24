@@ -2,17 +2,18 @@
 #include "Animation/PointDefinition.h"
 #include "AssociatedData.h"
 #include "TLogger.h"
+#include <memory>
 
 using namespace TracksAD;
 
 namespace Animation {
 
-PointDefinitionW TryGetPointData(BeatmapAssociatedData& beatmapAD, rapidjson::Value const& customData,
-                                 std::string_view pointName, Tracks::ffi::WrapBaseValueType type) {
+/// Try to get point definition from beatmap associated data
+PointDefinitionW ParsePointData(BeatmapAssociatedData& beatmapAD, rapidjson::Value const& customData,
+                                std::string_view customDataKey, Tracks::ffi::WrapBaseValueType type) {
   PointDefinitionW pointData = PointDefinitionW(nullptr);
 
-
-  auto customDataItr = customData.FindMember(pointName.data());
+  auto customDataItr = customData.FindMember(customDataKey.data());
   if (customDataItr == customData.MemberEnd()) {
     return pointData;
   }
@@ -21,34 +22,36 @@ PointDefinitionW TryGetPointData(BeatmapAssociatedData& beatmapAD, rapidjson::Va
   switch (pointString.GetType()) {
   case rapidjson::kNullType:
     return pointData;
+    // refers to a PointDefinition that is associated by anme
   case rapidjson::kStringType: {
     auto id = pointString.GetString();
-    auto existing = beatmapAD.GetPointDefinition(id, type);
-    if (existing) {
-      TLogger::Logger.fmtLog<Paper::LogLevel::INF>("Using existing point definition {} {}", id, (int)type);
-      return existing.value();
+
+    // look for point def by id
+    auto keyPair = std::pair<std::string, Tracks::ffi::WrapBaseValueType>(std::string(id), type);
+    auto it = beatmapAD.pointDefinitions.find(keyPair);
+    if (it != beatmapAD.pointDefinitions.end()) {
+      return it->second;
     }
 
-    auto itr = beatmapAD.pointDefinitionsRaw.find(id);
-    if (itr == beatmapAD.pointDefinitionsRaw.end()) {
+    auto itr = beatmapAD.pointDefinitionsJSON.find(id);
+    if (itr == beatmapAD.pointDefinitionsJSON.end()) {
       TLogger::Logger.warn("Could not find point definition {}", pointString.GetString());
       return pointData;
     }
 
     // Create new point definition from JSON
     TLogger::Logger.fmtLog<Paper::LogLevel::INF>("Using point definition {} {}", pointString.GetString(), (int)type);
-    auto json = convert_rapidjson(*itr->second);
     auto baseProviderContext = beatmapAD.GetBaseProviderContext();
-    auto pointDataAnon = Tracks::ffi::tracks_make_base_point_definition(json, type, baseProviderContext);
-    pointData = beatmapAD.AddPointDefinition(id, pointDataAnon);
+    pointData = PointDefinitionW(*itr->second, type, baseProviderContext);
+    beatmapAD.AddPointDefinition(id, pointData);
 
     break;
   }
+    // is a point object, parse
   default:
-    auto json = convert_rapidjson(pointString);
     auto baseProviderContext = beatmapAD.GetBaseProviderContext();
-    auto pointDataAnon = Tracks::ffi::tracks_make_base_point_definition(json, type, baseProviderContext);
-    pointData = beatmapAD.AddPointDefinition(std::nullopt, pointDataAnon);
+    pointData = PointDefinitionW(pointString, type, baseProviderContext);
+    beatmapAD.AddPointDefinition(std::nullopt, pointData);
   }
 
   return pointData;
