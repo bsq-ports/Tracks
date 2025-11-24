@@ -258,6 +258,9 @@ struct TrackW {
   Tracks::ffi::TracksContext* internal_tracks_context;
   bool v2;
 
+  // using CWrappedCallback = void (* *)(struct Tracks::ffi::GameObject, bool, void*);
+  using CWrappedCallback = decltype(Tracks::ffi::track_register_game_object_callback(nullptr, nullptr, nullptr));
+
   constexpr TrackW() = default;
   constexpr TrackW(Tracks::ffi::TrackKeyFFI track, bool v2, Tracks::ffi::TracksContext* internal_tracks_context)
       : track(track), v2(v2), internal_tracks_context(internal_tracks_context) {}
@@ -315,7 +318,7 @@ struct TrackW {
   }
 
   // very nasty
-  void* RegisterGameObjectCallback(std::function<void(UnityEngine::GameObject*, bool)> callback) const {
+  CWrappedCallback RegisterGameObjectCallback(std::function<void(UnityEngine::GameObject*, bool)> callback) const {
     if (!callback) {
       return nullptr;
     }
@@ -336,12 +339,11 @@ struct TrackW {
     return Tracks::ffi::track_register_game_object_callback(track, wrapper, callbackPtr);
   }
 
-  void RemoveGameObjectCallback(void* callbackPtr) const {
-    if (!callbackPtr) {
+  void RemoveGameObjectCallback(CWrappedCallback callback) const {
+    if (!callback) {
       return;
     }
 
-    auto* callback = reinterpret_cast<void (**)(Tracks::ffi::GameObject, bool)>(callbackPtr);
 
     auto track = getTrackPtr();
     Tracks::ffi::track_remove_game_object_callback(track, callback);

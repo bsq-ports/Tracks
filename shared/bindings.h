@@ -780,6 +780,7 @@ void path_property_init(PathProperty *ptr,
  * # Safety
  * - `ptr` must be a valid pointer to a `PathProperty`.
  * - `new_point_data`, if non-null, must point to a valid `BasePointDefinition` and ownership of its contents may be moved.
+ *
  * Consumes the path property and frees its memory.
  */
 void path_property_free(PathProperty *ptr);
