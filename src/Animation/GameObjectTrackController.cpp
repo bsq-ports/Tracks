@@ -215,9 +215,10 @@ GameObjectTrackController::HandleTrackData(UnityEngine::GameObject* gameObject, 
   // cleaned up on OnDestroy
   trackController->data = new GameObjectTrackControllerData(track, v2);
 
-  for (auto t : track) {
-    t.RegisterGameObject(gameObject);
-  }
+  // not necessary 
+  // for (auto t : track) {
+  //   t.RegisterGameObject(gameObject);
+  // }
 
   return trackController;
 }
