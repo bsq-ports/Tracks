@@ -1,7 +1,7 @@
 pub extern crate tracks_rs;
 
 use android_logger::Config;
-use log::{error, info, LevelFilter};
+use log::{LevelFilter, error, info};
 use std::backtrace::Backtrace;
 use std::ffi::CString;
 use std::panic::PanicHookInfo;
@@ -24,8 +24,13 @@ pub unsafe extern "C" fn set_panic_callback(callback: extern "C" fn(*const std::
 
 #[ctor::ctor]
 fn main() {
-    android_logger::init_once(Config::default().with_max_level(LevelFilter::Trace));
+    if paper2_tracing::init_paper_tracing().is_err() {
+        // fallback to android_logger if tracing initialization fails
+        android_logger::init_once(Config::default().with_max_level(LevelFilter::Trace));
+        info!("Failed to initialize paper2 tracing, falling back to android_logger");
+    };
 
+    info!("tracks_rs_link initialized");
     std::panic::set_hook(panic_hook(true, true));
 }
 
@@ -59,12 +64,12 @@ pub fn panic_hook(
                 String::new()
             };
 
-            let finished = CString::new(format!("{}\n{}", message, backtrace)).unwrap();
+            let finished = CString::new(format!("{message}\n{backtrace}")).unwrap();
 
             callback(finished.as_ptr());
         }
 
-        info!(target: "panic", "panicked at '{}', {}", msg, location);
+        info!(target: "panic", "panicked at '{msg}', {location}");
         if backtrace {
             error!(target: "panic", "{:?}", Backtrace::force_capture());
         }

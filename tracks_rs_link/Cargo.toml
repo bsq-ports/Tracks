@@ -11,6 +11,7 @@ log = "0.4"
 tracks_rs = { git = "https://github.com/bsq-ports/tracks-rs.git",  features = [
     "ffi",
 ] }
+paper2_tracing = { git = "https://github.com/Fernthedev/paperlog.git", package = "paper2_tracing" }
 
 [lib]
 crate-type = ["staticlib"]
