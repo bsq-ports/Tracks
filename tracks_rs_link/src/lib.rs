@@ -24,12 +24,12 @@ pub unsafe extern "C" fn set_panic_callback(callback: extern "C" fn(*const std::
 
 #[ctor::ctor]
 fn main() {
-    if paper2_tracing::init_paper_tracing().is_err() {
-        // fallback to android_logger if tracing initialization fails
-        android_logger::init_once(Config::default().with_max_level(LevelFilter::Trace));
-        info!("Failed to initialize paper2 tracing, falling back to android_logger");
-    };
-
+    // if paper2_tracing::init_paper_tracing().is_err() {
+    //     // fallback to android_logger if tracing initialization fails
+    //     info!("Failed to initialize paper2 tracing, falling back to android_logger");
+    // };
+    
+    android_logger::init_once(Config::default().with_max_level(LevelFilter::Trace));
     info!("tracks_rs_link initialized");
     std::panic::set_hook(panic_hook(true, true));
 }
