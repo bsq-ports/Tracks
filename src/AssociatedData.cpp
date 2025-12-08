@@ -274,16 +274,16 @@ void readBeatmapDataAD(CustomJSONData::CustomBeatmapData* beatmapData) {
 
     if (pointDefinitionsIt != customData.MemberEnd()) {
       rapidjson::Value const& pointDefinitions = pointDefinitionsIt->value;
-      for (rapidjson::Value::ConstValueIterator itr = pointDefinitions.Begin(); itr != pointDefinitions.End(); itr++) {
-        if (v2) {
+      if (v2) {
+        for (rapidjson::Value::ConstValueIterator itr = pointDefinitions.Begin(); itr != pointDefinitions.End(); itr++) {
           std::string pointName = (*itr)[Constants::V2_NAME.data()].GetString();
           CJDLogger::Logger.fmtLog<Paper::LogLevel::INF>("Added point {}", pointName);
           pointDataManager.AddPoint(pointName, (*itr)[Constants::V2_POINTS.data()]);
-        } else {
-          for (auto const& [name, pointDataVal] : pointDefinitionsIt->value.GetObject()) {
-            CJDLogger::Logger.fmtLog<Paper::LogLevel::INF>("Added point {}", name.GetString());
-            pointDataManager.AddPoint(name.GetString(), pointDataVal);
-          }
+        }
+      } else {
+        for (auto const& [name, pointDataVal] : pointDefinitionsIt->value.GetObject()) {
+          CJDLogger::Logger.fmtLog<Paper::LogLevel::INF>("Added point {}", name.GetString());
+          pointDataManager.AddPoint(name.GetString(), pointDataVal);
         }
       }
     }
