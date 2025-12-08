@@ -281,11 +281,9 @@ void readBeatmapDataAD(CustomJSONData::CustomBeatmapData* beatmapData) {
           pointDataManager.AddPoint(pointName, (*itr)[Constants::V2_POINTS.data()]);
         }
       } else {
-        for (rapidjson::Value::ConstMemberIterator itr = pointDefinitions.MemberBegin(); itr != pointDefinitions.MemberEnd(); itr++) {
-          for (auto const& [name, pointDataVal] : pointDefinitionsIt->value.GetObject()) {
-            CJDLogger::Logger.fmtLog<Paper::LogLevel::INF>("Added point {}", name.GetString());
-            pointDataManager.AddPoint(name.GetString(), pointDataVal);
-          }
+        for (auto const& [name, pointDataVal] : pointDefinitionsIt->value.GetObject()) {
+          CJDLogger::Logger.fmtLog<Paper::LogLevel::INF>("Added point {}", name.GetString());
+          pointDataManager.AddPoint(name.GetString(), pointDataVal);
         }
       }
     }
