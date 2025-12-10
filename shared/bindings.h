@@ -74,6 +74,7 @@ enum PropertyNames
 #endif // __cplusplus
  {
   Position,
+  OffsetPosition,
   Rotation,
   Scale,
   LocalRotation,
@@ -318,50 +319,6 @@ extern "C" {
 #endif // __cplusplus
 
 /**
- * Creates a new CoroutineManager instance and returns a raw pointer to it.
- * The caller is responsible for freeing the memory using destroy_coroutine_manager.
- */
-struct CoroutineManager *create_coroutine_manager(void);
-
-/**
- * Destroys a `CoroutineManager` instance, freeing its memory.
- *
- * # Safety
- * - `manager` must be a pointer previously returned by `create_coroutine_manager` and not already freed.
- * - Passing a null pointer is a no-op.
- */
-void destroy_coroutine_manager(struct CoroutineManager *manager);
-
-/**
- * Starts an event coroutine in the manager. Consumes `event_data`.
- *
- * # Safety
- * - `manager` must be a valid pointer to a `CoroutineManager`.
- * - `context` must be a valid pointer to a `BaseProviderContext` for the duration of the call.
- * - `tracks_holder` must be a valid pointer to a `TracksHolder`.
- * - `event_data` must be a pointer returned by `event_data_to_rust`. The data is cloned, so the caller retains ownership.
- */
-void start_event_coroutine(struct CoroutineManager *manager,
-                           float bpm,
-                           float song_time,
-                           const struct BaseProviderContext *context,
-                           struct TracksHolder *tracks_holder,
-                           const struct EventData *event_data);
-
-/**
- * Polls all events in the manager, updating their state based on the current song time.
- *
- * # Safety
- * - `manager` must be a valid pointer to a `CoroutineManager`.
- * - `context` must be a valid pointer to a `BaseProviderContext`.
- * - `tracks_holder` must be a valid pointer to a `TracksHolder`.
- */
-void poll_events(struct CoroutineManager *manager,
-                 float song_time,
-                 const struct BaseProviderContext *context,
-                 struct TracksHolder *tracks_holder);
-
-/**
  * Create a new `BaseProviderContext` and return a raw pointer to it.
  */
 struct BaseProviderContext *base_provider_context_create(void);
@@ -406,6 +363,50 @@ struct WrappedValues base_provider_context_get_values_array(const struct BasePro
  */
 enum WrapBaseValueType base_provider_context_get_type(const struct BaseProviderContext *ctx,
                                                       const char *base);
+
+/**
+ * Creates a new CoroutineManager instance and returns a raw pointer to it.
+ * The caller is responsible for freeing the memory using destroy_coroutine_manager.
+ */
+struct CoroutineManager *create_coroutine_manager(void);
+
+/**
+ * Destroys a `CoroutineManager` instance, freeing its memory.
+ *
+ * # Safety
+ * - `manager` must be a pointer previously returned by `create_coroutine_manager` and not already freed.
+ * - Passing a null pointer is a no-op.
+ */
+void destroy_coroutine_manager(struct CoroutineManager *manager);
+
+/**
+ * Starts an event coroutine in the manager. Consumes `event_data`.
+ *
+ * # Safety
+ * - `manager` must be a valid pointer to a `CoroutineManager`.
+ * - `context` must be a valid pointer to a `BaseProviderContext` for the duration of the call.
+ * - `tracks_holder` must be a valid pointer to a `TracksHolder`.
+ * - `event_data` must be a pointer returned by `event_data_to_rust`. The data is cloned, so the caller retains ownership.
+ */
+void start_event_coroutine(struct CoroutineManager *manager,
+                           float bpm,
+                           float song_time,
+                           const struct BaseProviderContext *context,
+                           struct TracksHolder *tracks_holder,
+                           const struct EventData *event_data);
+
+/**
+ * Polls all events in the manager, updating their state based on the current song time.
+ *
+ * # Safety
+ * - `manager` must be a valid pointer to a `CoroutineManager`.
+ * - `context` must be a valid pointer to a `BaseProviderContext`.
+ * - `tracks_holder` must be a valid pointer to a `TracksHolder`.
+ */
+void poll_events(struct CoroutineManager *manager,
+                 float song_time,
+                 const struct BaseProviderContext *context,
+                 struct TracksHolder *tracks_holder);
 
 /**
  * C-compatible wrapper for easing functions

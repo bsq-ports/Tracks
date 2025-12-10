@@ -6,6 +6,7 @@
 #include <string>
 #include "../Vector.h"
 #include "../sv/small_vector.h"
+#include "../Constants.h"
 #include "PointDefinition.h"
 #include "UnityEngine/GameObject.hpp"
 
@@ -290,25 +291,43 @@ struct TrackW {
     return Tracks::ffi::tracks_holder_get_track_mut(*internal_tracks_context, track);
   }
 
+  Tracks::ffi::PropertyNames AliasPropertyName(Tracks::ffi::PropertyNames original) const {
+    // if v3, return original
+    if (!v2) return original;
+    // alias offsetPosition into position
+    if (original == Tracks::ffi::PropertyNames::OffsetPosition) return Tracks::ffi::PropertyNames::Position;
+
+    return original;
+  }
+
+  std::string_view AliasPropertyName(std::string_view original) const {
+    // if v3, return original
+    if (!v2) return original;
+    // alias offsetPosition into position
+    if (original == TracksAD::Constants::OFFSET_POSITION) return TracksAD::Constants::POSITION;
+
+    return original;
+  }
+
   [[nodiscard]] PropertyW GetProperty(std::string_view name) const {
     auto ptr = getTrackPtr();
-    auto prop = Tracks::ffi::track_get_property(ptr, name.data());
+    auto prop = Tracks::ffi::track_get_property(ptr, AliasPropertyName(name).data());
     return PropertyW(prop);
   }
   [[nodiscard]] PropertyW GetPropertyNamed(Tracks::ffi::PropertyNames name) const {
     auto ptr = getTrackPtr();
-    auto prop = Tracks::ffi::track_get_property_by_name(ptr, name);
+    auto prop = Tracks::ffi::track_get_property_by_name(ptr, AliasPropertyName(name));
     return PropertyW(prop);
   }
 
   [[nodiscard]] PathPropertyW GetPathProperty(std::string_view name) const {
     auto ptr = getTrackPtr();
-    auto prop = Tracks::ffi::track_get_path_property(ptr, name.data());
+    auto prop = Tracks::ffi::track_get_path_property(ptr, AliasPropertyName(name).data());
     return PathPropertyW(prop, base_provider_context);
   }
   [[nodiscard]] PathPropertyW GetPathPropertyNamed(Tracks::ffi::PropertyNames name) const {
     auto track = getTrackPtr();
-    auto prop = Tracks::ffi::track_get_path_property_by_name(getTrackPtr(), name);
+    auto prop = Tracks::ffi::track_get_path_property_by_name(getTrackPtr(), AliasPropertyName(name));
     return PathPropertyW(prop, base_provider_context);
   }
 
