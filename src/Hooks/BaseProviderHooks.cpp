@@ -121,7 +121,7 @@ MAKE_HOOK_MATCH(PlayerTransforms_Update, &GlobalNamespace::PlayerTransforms::Upd
   baseProviderContext->SetQuatValue("baseHeadRotation",
                                     { baseHeadRotation.x, baseHeadRotation.y, baseHeadRotation.z, baseHeadRotation.w });
   baseProviderContext->SetVector3Value(
-      "baseLeftHandLocalPosition ",
+      "baseLeftHandLocalPosition",
       { baseLeftHandLocalPosition.x, baseLeftHandLocalPosition.y, baseLeftHandLocalPosition.z });
   baseProviderContext->SetQuatValue("baseLeftHandLocalRotation",
                                     { baseLeftHandLocalRotation.x, baseLeftHandLocalRotation.y,
