@@ -35,7 +35,7 @@ void GameObjectTrackController::Awake() {
 }
 
 void GameObjectTrackController::Start() {
-  CJDLogger::Logger.fmtLog<Paper::LogLevel::INF>("Checking data {}", fmt::ptr(data));
+  CJDLogger::Logger.fmtLog<Paper::LogLevel::INF>("Checking data {} v2 {}", fmt::ptr(data), data ? data->v2 : false);
   lastCheckedTime = TimeUnit();
 
   // CRASH_UNLESS(data);
