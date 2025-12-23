@@ -4,6 +4,9 @@
 #include "Track.h"
 #include "PointDefinition.h"
 
+#include <span>
+#include <optional>
+
 #define TRACKS_LIST_OPERATE_MULTIPLE(target, list, op)                                                                 \
   if (!list.empty()) {                                                                                                 \
     target.emplace();                                                                                                  \
@@ -36,7 +39,8 @@ static auto getCurrentTime() {
  * Point definition is then cached in beatmap associated data
  *
  * @param beatmapAD The Beatmap context
- * @param customData the object containing the point data map e.g `{"_color": [[0,0], [1,1]]}` or `{"_posiiton": "pointDef"}` 
+ * @param customData the object containing the point data map e.g `{"_color": [[0,0], [1,1]]}` or `{"_posiiton":
+ * "pointDef"}`
  * @param customDataKey the key to look for in customData
  * @param type The type of the point definition e.g float, vec3, quat or vec4
  * @return PointDefinitionW
@@ -164,8 +168,8 @@ GENERATE_PROPERTY_GETTERS(float, Float, ToFloat)
 // Macro to generate addition functions for spans
 #define GENERATE_ADD_FUNCTIONS(Type, TypeName)                                                                         \
   [[nodiscard]]                                                                                                        \
-  constexpr static Type add##TypeName##s(std::span<Type const> values) {                                               \
-    if (values.empty()) return (Type){};                                                                               \
+  constexpr static std::optional<Type> add##TypeName##s(std::span<Type const> values) {                                \
+    if (values.empty()) return std::nullopt;                                                                           \
     Type result = values[0];                                                                                           \
     for (size_t i = 1; i < values.size(); ++i) {                                                                       \
       result = result + values[i];                                                                                     \
@@ -176,8 +180,8 @@ GENERATE_PROPERTY_GETTERS(float, Float, ToFloat)
 // Macro to generate multiplication functions for spans
 #define GENERATE_MUL_FUNCTIONS(Type, TypeName)                                                                         \
   [[nodiscard]]                                                                                                        \
-  constexpr static Type multiply##TypeName##s(std::span<Type const> values) {                                          \
-    if (values.empty()) return (Type){};                                                                               \
+  constexpr static std::optional<Type> multiply##TypeName##s(std::span<Type const> values) {                           \
+    if (values.empty()) return std::nullopt;                                                                           \
     Type result = values[0];                                                                                           \
     for (size_t i = 1; i < values.size(); ++i) {                                                                       \
       result = result * values[i];                                                                                     \
@@ -187,15 +191,7 @@ GENERATE_PROPERTY_GETTERS(float, Float, ToFloat)
 
 // Generate addition functions for different types
 GENERATE_ADD_FUNCTIONS(NEVector::Vector3, Vector3)
-[[nodiscard]] constexpr static NEVector ::Vector4 addVector4s(std ::span<NEVector ::Vector4 const> values) {
-  if (values.empty()) return NEVector ::Vector4{};
-  NEVector ::Vector4 result = values[0];
-  for (size_t i = 1; i < values.size(); ++i) {
-    result = result + values[i];
-  }
-  return result;
-}
-// GENERATE_ADD_FUNCTIONS(NEVector::Vector4, Vector4)
+GENERATE_ADD_FUNCTIONS(NEVector::Vector4, Vector4)
 GENERATE_ADD_FUNCTIONS(float, Float)
 
 // Generate multiplication functions for different types
