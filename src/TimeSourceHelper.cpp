@@ -8,8 +8,8 @@ float TimeSourceHelper::getSongTime(GlobalNamespace::IAudioTimeSource* timeSourc
   auto* timeSourceObject = reinterpret_cast<Il2CppObject*>(timeSource);
   if (timeSourceObject->klass == timeSyncControllerClass) {
     auto* timeSyncController = reinterpret_cast<AudioTimeSyncController*>(timeSource);
-    return timeSyncController->songTime;
+    return timeSyncController->_songTime;
   } else {
-    return timeSource->get_songTime();
+    return timeSource->songTime;
   }
 }
