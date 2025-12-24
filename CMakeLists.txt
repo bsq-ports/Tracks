@@ -13,8 +13,9 @@ message("Building ${COMPILE_ID} version ${MOD_VERSION} with ID ${MOD_ID} ${CMAKE
 
 # Enable interprocedural optimization (LTO) only for Release builds
 if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+        message("Using optimized build")
         set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-        add_compile_options(-O3)
+        add_compile_options(-O3 -flto)
 
         set(TRACKS_RS_LINK_PATH ${CMAKE_CURRENT_SOURCE_DIR}/tracks_rs_link/target/aarch64-linux-android/release/)
 else()
