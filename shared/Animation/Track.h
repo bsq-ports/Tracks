@@ -255,6 +255,168 @@ struct PathPropertyW {
   //   Tracks::ffi::path_property_init(property, newPointData.value_or(PointDefinitionW(nullptr)));
   // }
 };
+struct PropertiesMapW {
+  PropertiesMapW(Tracks::ffi::CPropertiesMap map)
+      : position(map.position), rotation(map.rotation), scale(map.scale), localRotation(map.local_rotation),
+        localPosition(map.local_position), dissolve(map.dissolve), dissolveArrow(map.dissolve_arrow), time(map.time),
+        cuttable(map.cuttable), color(map.color), attentuation(map.attentuation), fogOffset(map.fog_offset),
+        heightFogStartY(map.height_fog_start_y), heightFogHeight(map.height_fog_height) {}
+
+  PropertyW position;
+  PropertyW rotation;
+  PropertyW scale;
+  PropertyW localRotation;
+  PropertyW localPosition;
+  PropertyW dissolve;
+  PropertyW dissolveArrow;
+  PropertyW time;
+  PropertyW cuttable;
+  PropertyW color;
+  PropertyW attentuation;
+  PropertyW fogOffset;
+  PropertyW heightFogStartY;
+  PropertyW heightFogHeight;
+};
+
+struct PathPropertiesMapW {
+  PathPropertiesMapW(Tracks::ffi::CPathPropertiesMap map,
+                     std::shared_ptr<TracksAD::BaseProviderContextW> internal_tracks_context)
+      : position(map.position, internal_tracks_context), rotation(map.rotation, internal_tracks_context),
+        scale(map.scale, internal_tracks_context), localRotation(map.local_rotation, internal_tracks_context),
+        localPosition(map.local_position, internal_tracks_context),
+        definitePosition(map.definite_position, internal_tracks_context),
+        dissolve(map.dissolve, internal_tracks_context), dissolveArrow(map.dissolve_arrow, internal_tracks_context),
+        cuttable(map.cuttable, internal_tracks_context), color(map.color, internal_tracks_context) {}
+
+  PathPropertyW position;
+  PathPropertyW rotation;
+  PathPropertyW scale;
+  PathPropertyW localRotation;
+  PathPropertyW localPosition;
+  PathPropertyW definitePosition;
+  PathPropertyW dissolve;
+  PathPropertyW dissolveArrow;
+  PathPropertyW cuttable;
+  PathPropertyW color;
+};
+
+struct PropertiesValuesW {
+  constexpr PropertiesValuesW(Tracks::ffi::CPropertiesValues values)  {
+    if (values.position.has_value) {
+      position = NEVector::Vector3{ values.position.value.x, values.position.value.y, values.position.value.z };
+    }
+    if (values.rotation.has_value) {
+      rotation = NEVector::Quaternion{ values.rotation.value.x, values.rotation.value.y, values.rotation.value.z,
+                                       values.rotation.value.w };
+    }
+    if (values.scale.has_value) {
+      scale = NEVector::Vector3{ values.scale.value.x, values.scale.value.y, values.scale.value.z };
+    }
+    if (values.local_rotation.has_value) {
+      localRotation = NEVector::Quaternion{ values.local_rotation.value.x, values.local_rotation.value.y,
+                                            values.local_rotation.value.z, values.local_rotation.value.w };
+    }
+    if (values.local_position.has_value) {
+      localPosition =
+          NEVector::Vector3{ values.local_position.value.x, values.local_position.value.y,
+                             values.local_position.value.z };
+    }
+    if (values.dissolve.has_value) {
+      dissolve = values.dissolve.value;
+    }
+    if (values.dissolve_arrow.has_value) {
+      dissolveArrow = values.dissolve_arrow.value;
+    }
+    if (values.time.has_value) {
+      time = values.time.value;
+    }
+    if (values.cuttable.has_value) {
+      cuttable = values.cuttable.value;
+    }
+    if (values.color.has_value) {
+      color = NEVector::Vector4{ values.color.value.x, values.color.value.y, values.color.value.z,
+                                 values.color.value.w };
+    }
+    if (values.attentuation.has_value) {
+      attentuation = values.attentuation.value;
+    }
+    if (values.fog_offset.has_value) {
+      fogOffset = values.fog_offset.value;
+    }
+    if (values.height_fog_start_y.has_value) {
+      heightFogStartY = values.height_fog_start_y.value;
+    }
+    if (values.height_fog_height.has_value) {
+      heightFogHeight = values.height_fog_height.value;
+    }
+  }
+
+  std::optional<NEVector::Vector3> position;
+  std::optional<NEVector::Quaternion> rotation;
+  std::optional<NEVector::Vector3> scale;
+  std::optional<NEVector::Quaternion> localRotation;
+  std::optional<NEVector::Vector3> localPosition;
+  std::optional<float> dissolve;
+  std::optional<float> dissolveArrow;
+  std::optional<float> time;
+  std::optional<float> cuttable;
+  std::optional<NEVector::Vector4> color;
+  std::optional<float> attentuation;
+  std::optional<float> fogOffset;
+  std::optional<float> heightFogStartY;
+  std::optional<float> heightFogHeight;
+};
+
+struct PathPropertiesValuesW {
+  constexpr PathPropertiesValuesW(Tracks::ffi::CPathPropertiesValues values)  {
+    if (values.position.has_value) {
+      position = NEVector::Vector3{ values.position.value.x, values.position.value.y, values.position.value.z };
+    }
+    if (values.rotation.has_value) {
+      rotation = NEVector::Quaternion{ values.rotation.value.x, values.rotation.value.y, values.rotation.value.z,
+                                       values.rotation.value.w };
+    }
+    if (values.scale.has_value) {
+      scale = NEVector::Vector3{ values.scale.value.x, values.scale.value.y, values.scale.value.z };
+    }
+    if (values.local_rotation.has_value) {
+      localRotation = NEVector::Quaternion{ values.local_rotation.value.x, values.local_rotation.value.y,
+                                            values.local_rotation.value.z, values.local_rotation.value.w };
+    }
+    if (values.local_position.has_value) {
+      localPosition =
+          NEVector::Vector3{ values.local_position.value.x, values.local_position.value.y,
+                             values.local_position.value.z };
+    }
+    if (values.definite_position.has_value) {
+      definitePosition = values.definite_position.value;
+    }
+    if (values.dissolve.has_value) {
+      dissolve = values.dissolve.value;
+    }
+    if (values.dissolve_arrow.has_value) {
+      dissolveArrow = values.dissolve_arrow.value;
+    }
+    if (values.cuttable.has_value) {
+      cuttable = values.cuttable.value;
+    }
+    if (values.color.has_value) {
+      color = NEVector::Vector4{ values.color.value.x, values.color.value.y, values.color.value.z,
+                                 values.color.value.w };
+    }
+  }
+
+  std::optional<NEVector::Vector3> position;
+  std::optional<NEVector::Quaternion> rotation;
+  std::optional<NEVector::Vector3> scale;
+  std::optional<NEVector::Quaternion> localRotation;
+  std::optional<NEVector::Vector3> localPosition;
+  std::optional<float> definitePosition;
+  std::optional<float> dissolve;
+  std::optional<float> dissolveArrow;
+  std::optional<float> cuttable;
+  std::optional<NEVector::Vector4> color;
+};
 
 struct TrackW {
   Tracks::ffi::TrackKeyFFI track = Tracks::ffi::TrackKeyFFI{ static_cast<uint64_t>(-1) };
@@ -329,6 +491,34 @@ struct TrackW {
     auto track = getTrackPtr();
     auto prop = Tracks::ffi::track_get_path_property_by_name(getTrackPtr(), AliasPropertyName(name));
     return PathPropertyW(prop, base_provider_context);
+  }
+
+  [[nodiscard]]
+  PropertiesMapW GetPropertiesMapW() const {
+    auto track = getTrackPtr();
+    auto map = Tracks::ffi::track_get_properties_map(track);
+    return PropertiesMapW(map);
+  }
+
+  [[nodiscard]]
+  PathPropertiesMapW GetPathPropertiesMapW() const {
+    auto track = getTrackPtr();
+    auto map = Tracks::ffi::track_get_path_properties_map(track);
+    return PathPropertiesMapW(map, base_provider_context);
+  }
+
+  [[nodiscard]]
+  PropertiesValuesW GetPropertiesValuesW() const {
+    auto track = getTrackPtr();
+    auto values = Tracks::ffi::track_get_properties_values(track);
+    return PropertiesValuesW(values);
+  }
+
+  [[nodiscard]]
+  PathPropertiesValuesW GetPathPropertiesValuesW(float time) const {
+    auto track = getTrackPtr();
+    auto values = Tracks::ffi::track_get_path_properties_values(track, time, *base_provider_context);
+    return PathPropertiesValuesW(values);
   }
 
   void RegisterGameObject(UnityEngine::GameObject* gameObject) const {

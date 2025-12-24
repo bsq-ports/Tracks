@@ -310,6 +310,56 @@ typedef struct CPathPropertiesMap {
   PathProperty *color;
 } CPathPropertiesMap;
 
+typedef struct Vec3Option {
+  struct WrapVec3 value;
+  bool has_value;
+} Vec3Option;
+
+typedef struct QuatOption {
+  struct WrapQuat value;
+  bool has_value;
+} QuatOption;
+
+typedef struct FloatOption {
+  float value;
+  bool has_value;
+} FloatOption;
+
+typedef struct Vec4Option {
+  struct WrapVec4 value;
+  bool has_value;
+} Vec4Option;
+
+typedef struct CPropertiesValues {
+  struct Vec3Option position;
+  struct QuatOption rotation;
+  struct Vec3Option scale;
+  struct QuatOption local_rotation;
+  struct Vec3Option local_position;
+  struct FloatOption dissolve;
+  struct FloatOption dissolve_arrow;
+  struct FloatOption time;
+  struct FloatOption cuttable;
+  struct Vec4Option color;
+  struct FloatOption attentuation;
+  struct FloatOption fog_offset;
+  struct FloatOption height_fog_start_y;
+  struct FloatOption height_fog_height;
+} CPropertiesValues;
+
+typedef struct CPathPropertiesValues {
+  struct Vec3Option position;
+  struct QuatOption rotation;
+  struct Vec3Option scale;
+  struct QuatOption local_rotation;
+  struct Vec3Option local_position;
+  struct FloatOption definite_position;
+  struct FloatOption dissolve;
+  struct FloatOption dissolve_arrow;
+  struct FloatOption cuttable;
+  struct Vec4Option color;
+} CPathPropertiesValues;
+
 typedef void (*CGameObjectCallback)(struct GameObject, bool, void*);
 
 
@@ -899,6 +949,26 @@ struct CPropertiesMap track_get_properties_map(struct Track *track);
  * - Returned pointers are valid only while the track's path properties remain in-place.
  */
 struct CPathPropertiesMap track_get_path_properties_map(struct Track *track);
+
+/**
+ * Return a `CPropertiesValues` with the current values of the track's properties.
+ * - `track` must be a valid, non-null pointer to a `Track
+ * - The returned struct contains copies of the current property values.
+ */
+struct CPropertiesValues track_get_properties_values(struct Track *track);
+
+/**
+ * Return a `CPathPropertiesValues` with the interpolated values of the track's path properties at the given time.
+ * Safety:
+ * - `track` must be a valid, non-null pointer to a `Track`.
+ * - `ctx` must be a valid, non-null pointer to a `BaseProviderContext`.
+ *
+ * - The returned struct contains copies of the interpolated property values.
+ *
+ */
+struct CPathPropertiesValues track_get_path_properties_values(struct Track *track,
+                                                              float time,
+                                                              const struct BaseProviderContext *ctx);
 
 /**
  * Register a C callback to be invoked when a game object is added/removed.
