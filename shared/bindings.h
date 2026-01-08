@@ -282,6 +282,7 @@ typedef struct GameObject {
 
 typedef struct CPropertiesMap {
   struct ValueProperty *position;
+  struct ValueProperty *offset_position;
   struct ValueProperty *rotation;
   struct ValueProperty *scale;
   struct ValueProperty *local_rotation;
@@ -299,6 +300,7 @@ typedef struct CPropertiesMap {
 
 typedef struct CPathPropertiesMap {
   PathProperty *position;
+  PathProperty *offset_position;
   PathProperty *rotation;
   PathProperty *scale;
   PathProperty *local_rotation;
@@ -332,6 +334,7 @@ typedef struct Vec4Option {
 
 typedef struct CPropertiesValues {
   struct Vec3Option position;
+  struct Vec3Option offset_position;
   struct QuatOption rotation;
   struct Vec3Option scale;
   struct QuatOption local_rotation;
@@ -349,6 +352,7 @@ typedef struct CPropertiesValues {
 
 typedef struct CPathPropertiesValues {
   struct Vec3Option position;
+  struct Vec3Option offset_position;
   struct QuatOption rotation;
   struct Vec3Option scale;
   struct QuatOption local_rotation;

@@ -257,12 +257,14 @@ struct PathPropertyW {
 };
 struct PropertiesMapW {
   PropertiesMapW(Tracks::ffi::CPropertiesMap map)
-      : position(map.position), rotation(map.rotation), scale(map.scale), localRotation(map.local_rotation),
-        localPosition(map.local_position), dissolve(map.dissolve), dissolveArrow(map.dissolve_arrow), time(map.time),
-        cuttable(map.cuttable), color(map.color), attentuation(map.attentuation), fogOffset(map.fog_offset),
-        heightFogStartY(map.height_fog_start_y), heightFogHeight(map.height_fog_height) {}
+      : position(map.position), offsetPosition(map.offset_position), rotation(map.rotation), scale(map.scale), 
+        localRotation(map.local_rotation), localPosition(map.local_position), dissolve(map.dissolve), 
+        dissolveArrow(map.dissolve_arrow), time(map.time), cuttable(map.cuttable), color(map.color), 
+        attentuation(map.attentuation), fogOffset(map.fog_offset), heightFogStartY(map.height_fog_start_y), 
+        heightFogHeight(map.height_fog_height) {}
 
   PropertyW position;
+  PropertyW offsetPosition;
   PropertyW rotation;
   PropertyW scale;
   PropertyW localRotation;
@@ -281,14 +283,15 @@ struct PropertiesMapW {
 struct PathPropertiesMapW {
   PathPropertiesMapW(Tracks::ffi::CPathPropertiesMap map,
                      std::shared_ptr<TracksAD::BaseProviderContextW> internal_tracks_context)
-      : position(map.position, internal_tracks_context), rotation(map.rotation, internal_tracks_context),
-        scale(map.scale, internal_tracks_context), localRotation(map.local_rotation, internal_tracks_context),
-        localPosition(map.local_position, internal_tracks_context),
-        definitePosition(map.definite_position, internal_tracks_context),
+      : position(map.position, internal_tracks_context), offsetPosition(map.offset_position, internal_tracks_context), 
+        rotation(map.rotation, internal_tracks_context), scale(map.scale, internal_tracks_context), 
+        localRotation(map.local_rotation, internal_tracks_context), localPosition(map.local_position, internal_tracks_context),
+        definitePosition(map.definite_position, internal_tracks_context), 
         dissolve(map.dissolve, internal_tracks_context), dissolveArrow(map.dissolve_arrow, internal_tracks_context),
         cuttable(map.cuttable, internal_tracks_context), color(map.color, internal_tracks_context) {}
 
   PathPropertyW position;
+  PathPropertyW offsetPosition;
   PathPropertyW rotation;
   PathPropertyW scale;
   PathPropertyW localRotation;
@@ -304,6 +307,9 @@ struct PropertiesValuesW {
   constexpr PropertiesValuesW(Tracks::ffi::CPropertiesValues values)  {
     if (values.position.has_value) {
       position = NEVector::Vector3{ values.position.value.x, values.position.value.y, values.position.value.z };
+    }
+    if (values.offset_position.has_value) {
+      offsetPosition = NEVector::Vector3{ values.offset_position.value.x, values.offset_position.value.y, values.offset_position.value.z };
     }
     if (values.rotation.has_value) {
       rotation = NEVector::Quaternion{ values.rotation.value.x, values.rotation.value.y, values.rotation.value.z,
@@ -352,6 +358,7 @@ struct PropertiesValuesW {
   }
 
   std::optional<NEVector::Vector3> position;
+  std::optional<NEVector::Vector3> offsetPosition;
   std::optional<NEVector::Quaternion> rotation;
   std::optional<NEVector::Vector3> scale;
   std::optional<NEVector::Quaternion> localRotation;
@@ -371,6 +378,9 @@ struct PathPropertiesValuesW {
   constexpr PathPropertiesValuesW(Tracks::ffi::CPathPropertiesValues values)  {
     if (values.position.has_value) {
       position = NEVector::Vector3{ values.position.value.x, values.position.value.y, values.position.value.z };
+    }
+    if (values.offset_position.has_value) {
+      offsetPosition = NEVector::Vector3{ values.offset_position.value.x, values.offset_position.value.y, values.offset_position.value.z };
     }
     if (values.rotation.has_value) {
       rotation = NEVector::Quaternion{ values.rotation.value.x, values.rotation.value.y, values.rotation.value.z,
@@ -407,6 +417,7 @@ struct PathPropertiesValuesW {
   }
 
   std::optional<NEVector::Vector3> position;
+  std::optional<NEVector::Vector3> offsetPosition;
   std::optional<NEVector::Quaternion> rotation;
   std::optional<NEVector::Vector3> scale;
   std::optional<NEVector::Quaternion> localRotation;
