@@ -23,14 +23,12 @@ BeatmapAssociatedData& getBeatmapAD(CustomJSONData::JSONWrapper* customData) {
   return std::any_cast<BeatmapAssociatedData&>(ad);
 }
 
-static std::unordered_map<CustomJSONData::CustomEventData const*, CustomEventAssociatedData> eventDataMap;
 
-::CustomEventAssociatedData& getEventAD(CustomJSONData::CustomEventData const* customData) {
-  return eventDataMap[customData];
-}
 
-void clearEventADs() {
-  eventDataMap.clear();
+::CustomEventAssociatedData& getEventAD(CustomJSONData::CustomEventData const* customEvent) {
+  std::any& ad = customEvent->customData->associatedData['T'];
+  if (!ad.has_value()) ad = std::make_any<CustomEventAssociatedData>();
+  return std::any_cast<CustomEventAssociatedData&>(ad);
 }
 
 inline bool IsStringProperties(std::string_view n) {
@@ -192,7 +190,9 @@ void LoadTrackEvent(CustomJSONData::CustomEventData* customEventData, TracksAD::
 
   eventAD.parsed = true;
 
-  rapidjson::Value const& eventData = *customEventData->data;
+  if (!customEventData->customData->value) return;
+
+  rapidjson::Value const& eventData = *customEventData->customData->value;
 
   eventAD.type = type;
   auto const& trackJSON = eventData[(v2 ? TracksAD::Constants::V2_TRACK : TracksAD::Constants::TRACK).data()];

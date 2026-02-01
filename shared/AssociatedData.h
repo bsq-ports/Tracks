@@ -170,7 +170,7 @@ BeatmapAssociatedData& getBeatmapAD(CustomJSONData::JSONWrapper* customData);
 BeatmapObjectAssociatedData& getAD(CustomJSONData::JSONWrapper* customData);
 CustomEventAssociatedData& getEventAD(CustomJSONData::CustomEventData const* customEventData);
 
-void clearEventADs();
+
 } // namespace TracksAD
 
 namespace NEJSON {
