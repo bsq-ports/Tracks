@@ -39,7 +39,7 @@ MAKE_HOOK_MATCH(BeatmapObjectSpawnController_Start, &BeatmapObjectSpawnControlle
 }
 
 void Events::UpdateCoroutines(BeatmapCallbacksController* callbackController) {
-  auto songTime = callbackController->songTime;
+  auto songTime = callbackController->_songTime;
   auto customBeatmapData = il2cpp_utils::cast<CustomJSONData::CustomBeatmapData>(callbackController->_beatmapData);
 
   auto& beatmapAD = getBeatmapAD(customBeatmapData->customData);
@@ -97,7 +97,6 @@ void CustomEventCallback(BeatmapCallbacksController* callbackController,
   auto coroutineManager = beatmapAD.GetCoroutineManager();
   auto baseManager = beatmapAD.GetBaseProviderContext();
   auto tracksHolder = beatmapAD.GetTracksHolder();
-
 
   auto songTime = callbackController->_songTime;
 
