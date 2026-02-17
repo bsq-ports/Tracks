@@ -76,6 +76,7 @@ enum PropertyNames
   Position,
   OffsetPosition,
   Rotation,
+  OffsetRotation,
   Scale,
   LocalRotation,
   LocalPosition,
@@ -284,6 +285,7 @@ typedef struct CPropertiesMap {
   struct ValueProperty *position;
   struct ValueProperty *offset_position;
   struct ValueProperty *rotation;
+  struct ValueProperty *offset_rotation;
   struct ValueProperty *scale;
   struct ValueProperty *local_rotation;
   struct ValueProperty *local_position;
@@ -302,6 +304,7 @@ typedef struct CPathPropertiesMap {
   PathProperty *position;
   PathProperty *offset_position;
   PathProperty *rotation;
+  PathProperty *offset_rotation;
   PathProperty *scale;
   PathProperty *local_rotation;
   PathProperty *local_position;
@@ -336,6 +339,7 @@ typedef struct CPropertiesValues {
   struct Vec3Option position;
   struct Vec3Option offset_position;
   struct QuatOption rotation;
+  struct QuatOption offset_rotation;
   struct Vec3Option scale;
   struct QuatOption local_rotation;
   struct Vec3Option local_position;
@@ -354,6 +358,7 @@ typedef struct CPathPropertiesValues {
   struct Vec3Option position;
   struct Vec3Option offset_position;
   struct QuatOption rotation;
+  struct QuatOption offset_rotation;
   struct Vec3Option scale;
   struct QuatOption local_rotation;
   struct Vec3Option local_position;

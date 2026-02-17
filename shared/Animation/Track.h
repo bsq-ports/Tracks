@@ -266,6 +266,7 @@ struct PropertiesMapW {
   PropertyW position;
   PropertyW offsetPosition;
   PropertyW rotation;
+  PropertyW offsetRotation;
   PropertyW scale;
   PropertyW localRotation;
   PropertyW localPosition;
@@ -284,15 +285,16 @@ struct PathPropertiesMapW {
   PathPropertiesMapW(Tracks::ffi::CPathPropertiesMap map,
                      std::shared_ptr<TracksAD::BaseProviderContextW> internal_tracks_context)
       : position(map.position, internal_tracks_context), offsetPosition(map.offset_position, internal_tracks_context), 
-        rotation(map.rotation, internal_tracks_context), scale(map.scale, internal_tracks_context), 
-        localRotation(map.local_rotation, internal_tracks_context), localPosition(map.local_position, internal_tracks_context),
-        definitePosition(map.definite_position, internal_tracks_context), 
+        rotation(map.rotation, internal_tracks_context), offsetRotation(map.offset_rotation, internal_tracks_context), 
+        scale(map.scale, internal_tracks_context), localRotation(map.local_rotation, internal_tracks_context), 
+        localPosition(map.local_position, internal_tracks_context), definitePosition(map.definite_position, internal_tracks_context), 
         dissolve(map.dissolve, internal_tracks_context), dissolveArrow(map.dissolve_arrow, internal_tracks_context),
         cuttable(map.cuttable, internal_tracks_context), color(map.color, internal_tracks_context) {}
 
   PathPropertyW position;
   PathPropertyW offsetPosition;
   PathPropertyW rotation;
+  PathPropertyW offsetRotation;
   PathPropertyW scale;
   PathPropertyW localRotation;
   PathPropertyW localPosition;
@@ -314,6 +316,10 @@ struct PropertiesValuesW {
     if (values.rotation.has_value) {
       rotation = NEVector::Quaternion{ values.rotation.value.x, values.rotation.value.y, values.rotation.value.z,
                                        values.rotation.value.w };
+    }
+    if (values.offset_rotation.has_value) {
+      offsetRotation = NEVector::Quaternion{ values.offset_rotation.value.x, values.offset_rotation.value.y, values.offset_rotation.value.z,
+                                       values.offset_rotation.value.w };
     }
     if (values.scale.has_value) {
       scale = NEVector::Vector3{ values.scale.value.x, values.scale.value.y, values.scale.value.z };
@@ -360,6 +366,7 @@ struct PropertiesValuesW {
   std::optional<NEVector::Vector3> position;
   std::optional<NEVector::Vector3> offsetPosition;
   std::optional<NEVector::Quaternion> rotation;
+  std::optional<NEVector::Quaternion> offsetRotation;
   std::optional<NEVector::Vector3> scale;
   std::optional<NEVector::Quaternion> localRotation;
   std::optional<NEVector::Vector3> localPosition;
@@ -385,6 +392,10 @@ struct PathPropertiesValuesW {
     if (values.rotation.has_value) {
       rotation = NEVector::Quaternion{ values.rotation.value.x, values.rotation.value.y, values.rotation.value.z,
                                        values.rotation.value.w };
+    }
+    if (values.offset_rotation.has_value) {
+      offsetRotation = NEVector::Quaternion{ values.offset_rotation.value.x, values.offset_rotation.value.y, values.offset_rotation.value.z,
+                                       values.offset_rotation.value.w };
     }
     if (values.scale.has_value) {
       scale = NEVector::Vector3{ values.scale.value.x, values.scale.value.y, values.scale.value.z };
@@ -419,6 +430,7 @@ struct PathPropertiesValuesW {
   std::optional<NEVector::Vector3> position;
   std::optional<NEVector::Vector3> offsetPosition;
   std::optional<NEVector::Quaternion> rotation;
+  std::optional<NEVector::Quaternion> offsetRotation;
   std::optional<NEVector::Vector3> scale;
   std::optional<NEVector::Quaternion> localRotation;
   std::optional<NEVector::Vector3> localPosition;
