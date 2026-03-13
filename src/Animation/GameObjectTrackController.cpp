@@ -113,20 +113,20 @@ void GameObjectTrackController::UpdateData(bool force) {
     CRASH_UNLESS(track.getTrackPtr());
 
     // after
-    rotation = track.GetPropertyNamed(PropertyNames::Rotation).GetQuat(lastCheckedTime);
-    localRotation = track.GetPropertyNamed(PropertyNames::LocalRotation).GetQuat(lastCheckedTime);
-    position = track.GetPropertyNamed(PropertyNames::Position).GetVec3(lastCheckedTime);
-    localPosition = track.GetPropertyNamed(PropertyNames::LocalPosition).GetVec3(lastCheckedTime);
-    scale = track.GetPropertyNamed(PropertyNames::Scale).GetVec3(lastCheckedTime);
+    rotation = track.GetPropertyNamed(PropertyNames::Rotation).GetQuat();
+    localRotation = track.GetPropertyNamed(PropertyNames::LocalRotation).GetQuat();
+    position = track.GetPropertyNamed(PropertyNames::Position).GetVec3();
+    localPosition = track.GetPropertyNamed(PropertyNames::LocalPosition).GetVec3();
+    scale = track.GetPropertyNamed(PropertyNames::Scale).GetVec3();
 
   } else {
 
     // now
-    auto localRotations = Animation::getPropertiesQuat(tracks, PropertyNames::LocalRotation, lastCheckedTime);
-    auto rotations = Animation::getPropertiesQuat(tracks, PropertyNames::Rotation, lastCheckedTime);
-    auto positions = Animation::getPropertiesVec3(tracks, PropertyNames::Position, lastCheckedTime);
-    auto localPositions = Animation::getPropertiesVec3(tracks, PropertyNames::LocalPosition, lastCheckedTime);
-    auto scales = Animation::getPropertiesVec3(tracks, PropertyNames::Scale, lastCheckedTime);
+    auto localRotations = Animation::getPropertiesQuat(tracks, PropertyNames::LocalRotation, {});
+    auto rotations = Animation::getPropertiesQuat(tracks, PropertyNames::Rotation, {});
+    auto positions = Animation::getPropertiesVec3(tracks, PropertyNames::Position, {});
+    auto localPositions = Animation::getPropertiesVec3(tracks, PropertyNames::LocalPosition, {});
+    auto scales = Animation::getPropertiesVec3(tracks, PropertyNames::Scale, {});
 
     TRACKS_LIST_OPERATE_MULTIPLE(localRotation, localRotations, *);
     TRACKS_LIST_OPERATE_MULTIPLE(rotation, rotations, *);
