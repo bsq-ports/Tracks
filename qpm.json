@@ -6,7 +6,7 @@
   "info": {
     "name": "Tracks",
     "id": "tracks",
-    "version": "2.5.0",
+    "version": "2.5.1",
     "url": "https://github.com/StackDoubleFlow/Tracks",
     "additionalData": {
       "overrideSoName": "libtracks.so",
@@ -53,7 +53,7 @@
     },
     {
       "id": "custom-json-data",
-      "versionRange": "^0.24.3",
+      "versionRange": "^0.24.5",
       "additionalData": {}
     },
     {
