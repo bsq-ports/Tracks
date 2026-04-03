@@ -115,11 +115,10 @@ public:
       return getTrack(*it);
     }
 
-    auto freeTrack = Tracks::ffi::track_create();
+    auto freeTrack = Tracks::ffi::track_create_named(name.data());
     auto trackKey = tracks_holder->AddTrack(freeTrack);
 
     auto ownedTrack = getTrack(trackKey);
-    ownedTrack.SetName(name);
 
     return ownedTrack;
   }
