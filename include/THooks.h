@@ -4,16 +4,20 @@
 
 class Hooks {
 private:
-  static inline std::vector<void (*)()> installFuncs;
+  static inline std::vector<std::pair<std::string, void (*)()>> installFuncs;
 
 public:
-  static inline void AddInstallFunc(void (*installFunc)()) {
-    installFuncs.push_back(installFunc);
+  static inline void AddInstallFunc(std::string name, void (*installFunc)()) {
+    installFuncs.emplace_back(name, installFunc);
   }
 
   static inline void InstallHooks() {
-    for (auto installFunc : installFuncs) {
-      installFunc();
+    std::sort(installFuncs.begin(), installFuncs.end(),
+              [](std::pair<std::string, void (*)()> const& a, std::pair<std::string, void (*)()> const& b) {
+                return a.first < b.first;
+              });
+    for (auto const& installFunc : installFuncs) {
+      installFunc.second();
     }
   }
 };
@@ -21,7 +25,7 @@ public:
 #define TInstallHooks(func)                                                                                            \
   struct __TRegister##func {                                                                                           \
     __TRegister##func() {                                                                                              \
-      Hooks::AddInstallFunc(func);                                                                                     \
+      Hooks::AddInstallFunc(#func, func);                                                                              \
       __android_log_print(ANDROID_LOG_DEBUG, "TInstallHooks", "Registered install func: " #func);                      \
     }                                                                                                                  \
   };                                                                                                                   \
