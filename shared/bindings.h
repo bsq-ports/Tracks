@@ -130,11 +130,13 @@ typedef struct BasePointDefinition BasePointDefinition;
  */
 typedef struct BaseProviderContext BaseProviderContext;
 
+typedef struct BasicPointDefinition_Vec4 BasicPointDefinition_Vec4;
+
+typedef struct BasicPointDefinition_f32 BasicPointDefinition_f32;
+
 typedef struct CoroutineManager CoroutineManager;
 
 typedef struct EventData EventData;
-
-typedef struct FloatPointDefinition FloatPointDefinition;
 
 /**
  * A structure to manage interpolation between two point definitions over time.
@@ -154,8 +156,6 @@ typedef struct TracksHolder TracksHolder;
 typedef struct ValueProperty ValueProperty;
 
 typedef struct Vector3PointDefinition Vector3PointDefinition;
-
-typedef struct Vector4PointDefinition Vector4PointDefinition;
 
 typedef struct WrappedValues {
   const float *values;
@@ -240,6 +240,8 @@ typedef struct FFIJsonValue {
   union JsonValueData data;
 } FFIJsonValue;
 
+typedef struct BasicPointDefinition_f32 FloatPointDefinition;
+
 typedef struct FloatInterpolationResult {
   float value;
   bool is_last;
@@ -254,6 +256,8 @@ typedef struct Vector3InterpolationResult {
   struct WrapVec3 value;
   bool is_last;
 } Vector3InterpolationResult;
+
+typedef struct BasicPointDefinition_Vec4 Vector4PointDefinition;
 
 typedef struct Vector4InterpolationResult {
   struct WrapVec4 value;
@@ -422,6 +426,11 @@ struct WrappedValues base_provider_context_get_values_array(const struct BasePro
  */
 enum WrapBaseValueType base_provider_context_get_type(const struct BaseProviderContext *ctx,
                                                       const char *base);
+
+/**
+ * Call `update_providers` on the `BaseProviderContext` with a delta time.
+ */
+void base_provider_context_update(struct BaseProviderContext *ctx, float delta);
 
 /**
  * Creates a new CoroutineManager instance and returns a raw pointer to it.
@@ -607,8 +616,8 @@ enum WrapBaseValueType tracks_base_point_definition_get_type(const struct BasePo
  * - `json` may be null; if non-null it must point to a valid `FFIJsonValue`.
  * - `context` must be a valid pointer to a `BaseProviderContext`.
  */
-const struct FloatPointDefinition *tracks_make_float_point_definition(const struct FFIJsonValue *json,
-                                                                      struct BaseProviderContext *context);
+const FloatPointDefinition *tracks_make_float_point_definition(const struct FFIJsonValue *json,
+                                                               struct BaseProviderContext *context);
 
 /**
  * Interpolate a float point definition at `time`.
@@ -617,7 +626,7 @@ const struct FloatPointDefinition *tracks_make_float_point_definition(const stru
  * - `point_definition` must be a valid pointer to a `FloatPointDefinition`.
  * - `context` must be a valid pointer to a `BaseProviderContext`.
  */
-struct FloatInterpolationResult tracks_interpolate_float(const struct FloatPointDefinition *point_definition,
+struct FloatInterpolationResult tracks_interpolate_float(const FloatPointDefinition *point_definition,
                                                          float time,
                                                          struct BaseProviderContext *context);
 
@@ -625,13 +634,13 @@ struct FloatInterpolationResult tracks_interpolate_float(const struct FloatPoint
  * # Safety
  * - `point_definition` must be a valid pointer to a `FloatPointDefinition`.
  */
-uintptr_t tracks_float_count(const struct FloatPointDefinition *point_definition);
+uintptr_t tracks_float_count(const FloatPointDefinition *point_definition);
 
 /**
  * # Safety
  * - `point_definition` must be a valid pointer to a `FloatPointDefinition`.
  */
-bool tracks_float_has_base_provider(const struct FloatPointDefinition *point_definition);
+bool tracks_float_has_base_provider(const FloatPointDefinition *point_definition);
 
 /**
  * QUATERNION POINT DEFINITION
@@ -706,8 +715,8 @@ bool tracks_vector3_has_base_provider(const struct Vector3PointDefinition *point
  * - `json` may be null; if non-null it must point to a valid `FFIJsonValue`.
  * - `context` must be a valid pointer to a `BaseProviderContext`.
  */
-const struct Vector4PointDefinition *tracks_make_vector4_point_definition(const struct FFIJsonValue *json,
-                                                                          struct BaseProviderContext *context);
+const Vector4PointDefinition *tracks_make_vector4_point_definition(const struct FFIJsonValue *json,
+                                                                   struct BaseProviderContext *context);
 
 /**
  * Interpolate a Vector4 point definition at `time`.
@@ -716,7 +725,7 @@ const struct Vector4PointDefinition *tracks_make_vector4_point_definition(const 
  * - `point_definition` must be a valid pointer to a `Vector4PointDefinition`.
  * - `context` must be a valid pointer to a `BaseProviderContext`.
  */
-struct Vector4InterpolationResult tracks_interpolate_vector4(const struct Vector4PointDefinition *point_definition,
+struct Vector4InterpolationResult tracks_interpolate_vector4(const Vector4PointDefinition *point_definition,
                                                              float time,
                                                              struct BaseProviderContext *context);
 
@@ -724,13 +733,13 @@ struct Vector4InterpolationResult tracks_interpolate_vector4(const struct Vector
  * # Safety
  * - `point_definition` must be a valid pointer to a `Vector4PointDefinition`.
  */
-uintptr_t tracks_vector4_count(const struct Vector4PointDefinition *point_definition);
+uintptr_t tracks_vector4_count(const Vector4PointDefinition *point_definition);
 
 /**
  * # Safety
  * - `point_definition` must be a valid pointer to a `Vector4PointDefinition`.
  */
-bool tracks_vector4_has_base_provider(const struct Vector4PointDefinition *point_definition);
+bool tracks_vector4_has_base_provider(const Vector4PointDefinition *point_definition);
 
 PathProperty *path_property_create(void);
 
@@ -812,6 +821,16 @@ struct CTimeUnit get_time(void);
  * - This function is FFI-safe but the returned pointer is not thread-safe; use from the same thread unless synchronized.
  */
 struct Track *track_create(void);
+
+/**
+ * Create a new `Track` and return a raw pointer to it.
+ *
+ * # Safety
+ * - The returned pointer is owned by the caller and must be freed with `track_destroy`.
+ * - The caller must not free the pointer by other means or use it after calling `track_destroy`.
+ * - This function is FFI-safe but the returned pointer is not thread-safe; use from the same thread unless synchronized.
+ */
+struct Track *track_create_named(const char *name);
 
 /**
  * Consumes the track and frees its memory.
@@ -961,6 +980,7 @@ struct CPathPropertiesMap track_get_path_properties_map(struct Track *track);
 
 /**
  * Return a `CPropertiesValues` with the current values of the track's properties.
+ * Safety:
  * - `track` must be a valid, non-null pointer to a `Track
  * - The returned struct contains copies of the current property values.
  */

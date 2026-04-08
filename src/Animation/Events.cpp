@@ -4,6 +4,7 @@
 #include "GlobalNamespace/BeatmapData.hpp"
 #include "GlobalNamespace/BeatmapObjectSpawnController.hpp"
 #include "GlobalNamespace/BpmController.hpp"
+#include "UnityEngine/Time.hpp"
 
 #include "UnityEngine/Resources.hpp"
 
@@ -47,6 +48,7 @@ void Events::UpdateCoroutines(BeatmapCallbacksController* callbackController) {
   auto coroutine = beatmapAD.GetCoroutineManager();
   auto baseManager = beatmapAD.GetBaseProviderContext();
   auto tracksHolder = beatmapAD.GetTracksHolder();
+  baseManager->Update(UnityEngine::Time::get_deltaTime());
   coroutine->PollCoroutines(songTime, *baseManager, *tracksHolder);
 }
 

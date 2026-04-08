@@ -99,6 +99,10 @@ struct BaseProviderContextW {
     return Tracks::ffi::base_provider_context_get_value(internal_base_provider_context, key.data());
   }
 
+  void Update(float deltaTime) {
+    Tracks::ffi::base_provider_context_update(internal_base_provider_context, deltaTime);
+  }
+
 
   void SetBaseValue(std::string_view key, Tracks::ffi::WrapBaseValue const& value) {
     Tracks::ffi::base_provider_context_set_value(internal_base_provider_context, key.data(), value);
