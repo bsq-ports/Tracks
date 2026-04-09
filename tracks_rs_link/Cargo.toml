@@ -5,12 +5,13 @@ edition = "2024"
 
 [dependencies]
 android_logger = "0.15"
-ctor = "0.6"
+ctor = "0.8"
 log = "0.4"
 # todo: use version
 tracks_rs = { git = "https://github.com/bsq-ports/tracks-rs.git",  features = [
     "ffi",
 ] }
+mimalloc = "0.1"
 # paper2_tracing = { git = "https://github.com/Fernthedev/paperlog.git", package = "paper2_tracing" }
 
 [lib]

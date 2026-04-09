@@ -6,6 +6,10 @@ use std::backtrace::Backtrace;
 use std::ffi::CString;
 use std::panic::PanicHookInfo;
 
+// use mimalloc
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 // Static variable to hold the panic callback function
 static mut PANIC_CALLBACK: Option<extern "C" fn(*const std::os::raw::c_char)> = None;
 
