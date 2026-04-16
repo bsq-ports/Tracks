@@ -5,10 +5,10 @@ edition = "2024"
 
 [dependencies]
 android_logger = "0.15"
-ctor = "0.8"
+ctor = "0.10"
 log = "0.4"
 # todo: use version
-tracks_rs = { git = "https://github.com/bsq-ports/tracks-rs.git", branch = "rewrite-compact", features = [
+tracks_rs = { git = "https://github.com/bsq-ports/tracks-rs.git", features = [
     "ffi",
 ] }
 mimalloc = "0.1"
