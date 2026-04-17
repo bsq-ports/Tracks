@@ -647,7 +647,7 @@ checksum = "756daf9b1013ebe47a8776667b466417e2d4c5679d441c26230efd9ef78692db"
 [[package]]
 name = "tracks_rs"
 version = "0.2.0"
-source = "git+https://github.com/bsq-ports/tracks-rs.git#e4bc44c572ee41a0a463fff6b475d43e22213998"
+source = "git+https://github.com/bsq-ports/tracks-rs.git#cd70c21ccba8a474f4e56c52e09eb0e282d0efd0"
 dependencies = [
  "ahash",
  "cbindgen",
@@ -688,9 +688,9 @@ checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
 
 [[package]]
 name = "uuid"
-version = "1.23.0"
+version = "1.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ac8b6f42ead25368cf5b098aeb3dc8a1a2c05a3eee8a9a1a68c640edbfc79d9"
+checksum = "ddd74a9687298c6858e9b88ec8935ec45d22e8fd5e6394fa1bd4e99a87789c76"
 dependencies = [
  "getrandom 0.4.2",
  "js-sys",
