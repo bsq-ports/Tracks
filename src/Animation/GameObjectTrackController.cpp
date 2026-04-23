@@ -6,6 +6,9 @@
 #include "sombrero/shared/Vector3Utils.hpp"
 #include "sombrero/shared/QuaternionUtils.hpp"
 
+#include "interop/property_wrappers.h"
+#include "interop/property_helpers.h"
+
 using namespace Tracks;
 
 bool GameObjectTrackController::LeftHanded = false;
@@ -122,11 +125,11 @@ void GameObjectTrackController::UpdateData(bool force) {
   } else {
 
     // now
-    auto localRotations = Animation::getPropertiesQuat(tracks, PropertyNames::LocalRotation, lastCheckedTime);
-    auto rotations = Animation::getPropertiesQuat(tracks, PropertyNames::Rotation, lastCheckedTime);
-    auto positions = Animation::getPropertiesVec3(tracks, PropertyNames::Position, lastCheckedTime);
-    auto localPositions = Animation::getPropertiesVec3(tracks, PropertyNames::LocalPosition, lastCheckedTime);
-    auto scales = Animation::getPropertiesVec3(tracks, PropertyNames::Scale, lastCheckedTime);
+    auto localRotations = TracksRS::Animation::getPropertiesQuat(tracks, PropertyNames::LocalRotation, lastCheckedTime);
+    auto rotations = TracksRS::Animation::getPropertiesQuat(tracks, PropertyNames::Rotation, lastCheckedTime);
+    auto positions = TracksRS::Animation::getPropertiesVec3(tracks, PropertyNames::Position, lastCheckedTime);
+    auto localPositions = TracksRS::Animation::getPropertiesVec3(tracks, PropertyNames::LocalPosition, lastCheckedTime);
+    auto scales = TracksRS::Animation::getPropertiesVec3(tracks, PropertyNames::Scale, lastCheckedTime);
 
     TRACKS_LIST_OPERATE_MULTIPLE(localRotation, localRotations, *);
     TRACKS_LIST_OPERATE_MULTIPLE(rotation, rotations, *);

@@ -1,0 +1,140 @@
+#include "../Vector.h"
+#include "../bindings.h"
+#include "./track_wrapper.h"
+#include "./time_wrapper.h"
+
+
+namespace TracksRS {
+namespace Animation {
+
+#pragma region property_utils
+
+// Conversion functions
+[[nodiscard]] constexpr static NEVector::Vector3 ToVector3(Tracks::ffi::WrapBaseValue const& val) {
+  if (val.ty != Tracks::ffi::WrapBaseValueType::Vec3) return {};
+  return { val.value.vec3.x, val.value.vec3.y, val.value.vec3.z };
+}
+
+[[nodiscard]] constexpr static NEVector::Vector4 ToVector4(Tracks::ffi::WrapBaseValue const& val) {
+  if (val.ty != Tracks::ffi::WrapBaseValueType::Vec4) return {};
+  return { val.value.vec4.x, val.value.vec4.y, val.value.vec4.z, val.value.vec4.w };
+}
+
+[[nodiscard]] constexpr static NEVector::Quaternion ToQuaternion(Tracks::ffi::WrapBaseValue const& val) {
+  if (val.ty != Tracks::ffi::WrapBaseValueType::Quat) return {};
+  return { val.value.quat.x, val.value.quat.y, val.value.quat.z, val.value.quat.w };
+}
+
+[[nodiscard]] constexpr static float ToFloat(Tracks::ffi::WrapBaseValue const& val) {
+  if (val.ty != Tracks::ffi::WrapBaseValueType::Float) return {};
+  return val.value.float_v;
+}
+
+// Base versions that return WrapBaseValue
+[[nodiscard]]
+constexpr static std::vector<Tracks::ffi::WrapBaseValue>
+getProperties(std::span<TracksRS::TrackW const> tracks, Tracks::ffi::PropertyNames name, TracksRS::TimeUnit time) {
+  std::vector<Tracks::ffi::WrapBaseValue> properties;
+  properties.reserve(tracks.size());
+  for (auto const& track : tracks) {
+    auto property = track.GetPropertyNamed(name);
+    auto value = property.GetValue();
+    if (TimeUnit(value.last_updated) <= time) continue;
+    if (!value.value.has_value) continue;
+    properties.push_back(value.value.value);
+  }
+
+  return properties;
+}
+
+[[nodiscard]]
+static std::vector<Tracks::ffi::WrapBaseValue> getPathProperties(std::span<TracksRS::TrackW const> tracks,
+                                                                 Tracks::ffi::PropertyNames name, uint64_t time) {
+  std::vector<Tracks::ffi::WrapBaseValue> properties;
+
+  properties.reserve(tracks.size());
+  for (auto const& track : tracks) {
+    auto property = track.GetPathPropertyNamed(name);
+    auto value = property.Interpolate(time);
+    if (!value.has_value()) continue;
+    properties.push_back(*value);
+  }
+
+  return properties;
+}
+
+// Macro to generate type-specific property getters
+#define GENERATE_PROPERTY_GETTERS(ReturnType, Suffix, Conversion)                                                      \
+  [[nodiscard]]                                                                                                        \
+  static std::vector<ReturnType> getProperties##Suffix(std::span<TrackW const> tracks,                                 \
+                                                       Tracks::ffi::PropertyNames name, TimeUnit time) {               \
+    std::vector<ReturnType> properties;                                                                                \
+    properties.reserve(tracks.size());                                                                                 \
+    for (auto const& track : tracks) {                                                                                 \
+      auto property = track.GetPropertyNamed(name);                                                                    \
+      auto value = property.GetValue();                                                                                \
+      if (!value.value.has_value) continue;                                                                            \
+      if (TimeUnit(value.last_updated) <= time) continue;                                                              \
+      properties.push_back(Conversion(value.value.value));                                                             \
+    }                                                                                                                  \
+    return properties;                                                                                                 \
+  }                                                                                                                    \
+                                                                                                                       \
+  [[nodiscard]]                                                                                                        \
+  static std::vector<ReturnType> getPathProperties##Suffix(std::span<TrackW const> tracks,                             \
+                                                           Tracks::ffi::PropertyNames name, float time) {              \
+    std::vector<ReturnType> properties;                                                                                \
+    properties.reserve(tracks.size());                                                                                 \
+    for (auto const& track : tracks) {                                                                                 \
+      auto property = track.GetPathPropertyNamed(name);                                                                \
+      auto value = property.Interpolate(time);                                                                         \
+      if (!value.has_value()) continue;                                                                                \
+      properties.push_back(Conversion(*value));                                                                        \
+    }                                                                                                                  \
+    return properties;                                                                                                 \
+  }
+
+// Generate specialized versions for different types
+GENERATE_PROPERTY_GETTERS(NEVector::Vector3, Vec3, ToVector3)
+GENERATE_PROPERTY_GETTERS(NEVector::Vector4, Vec4, ToVector4)
+GENERATE_PROPERTY_GETTERS(NEVector::Quaternion, Quat, ToQuaternion)
+GENERATE_PROPERTY_GETTERS(float, Float, ToFloat)
+
+// Macro to generate addition functions for spans
+#define GENERATE_ADD_FUNCTIONS(Type, TypeName)                                                                         \
+  [[nodiscard]]                                                                                                        \
+  constexpr static std::optional<Type> add##TypeName##s(std::span<Type const> values) {                                \
+    if (values.empty()) return std::nullopt;                                                                           \
+    Type result = values[0];                                                                                           \
+    for (size_t i = 1; i < values.size(); ++i) {                                                                       \
+      result = result + values[i];                                                                                     \
+    }                                                                                                                  \
+    return result;                                                                                                     \
+  }
+
+// Macro to generate multiplication functions for spans
+#define GENERATE_MUL_FUNCTIONS(Type, TypeName)                                                                         \
+  [[nodiscard]]                                                                                                        \
+  constexpr static std::optional<Type> multiply##TypeName##s(std::span<Type const> values) {                           \
+    if (values.empty()) return std::nullopt;                                                                           \
+    Type result = values[0];                                                                                           \
+    for (size_t i = 1; i < values.size(); ++i) {                                                                       \
+      result = result * values[i];                                                                                     \
+    }                                                                                                                  \
+    return result;                                                                                                     \
+  }
+
+// Generate addition functions for different types
+GENERATE_ADD_FUNCTIONS(NEVector::Vector3, Vector3)
+GENERATE_ADD_FUNCTIONS(NEVector::Vector4, Vector4)
+GENERATE_ADD_FUNCTIONS(float, Float)
+
+// Generate multiplication functions for different types
+GENERATE_MUL_FUNCTIONS(NEVector::Vector3, Vector3)
+GENERATE_MUL_FUNCTIONS(NEVector::Vector4, Vector4)
+GENERATE_MUL_FUNCTIONS(NEVector::Quaternion, Quaternion)
+GENERATE_MUL_FUNCTIONS(float, Float)
+
+#pragma endregion // property_utils
+} // namespace Animation
+} // namespace TracksRS

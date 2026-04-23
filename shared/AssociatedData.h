@@ -10,12 +10,15 @@
 #include "Animation/Animation.h"
 #include "Hash.h"
 #include "Vector.h"
-#include "bindings.h"
-#include "binding_wrappers.hpp"
+#include "./bindings.h"
 
 #include "custom-json-data/shared/CustomBeatmapData.h"
 #include "custom-json-data/shared/CustomEventData.h"
 #include "sv/small_vector.h"
+
+#include "./interop/coroutine_wrapper.h"
+#include "./interop/track_wrapper.h"
+#include "./interop.h"
 
 namespace UnityEngine {
 class Renderer;
