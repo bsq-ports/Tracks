@@ -6,7 +6,7 @@
     "info": {
       "name": "Tracks",
       "id": "tracks",
-      "version": "2.5.1",
+      "version": "2.5.2",
       "url": "https://github.com/StackDoubleFlow/Tracks",
       "additionalData": {
         "overrideSoName": "libtracks.so",
