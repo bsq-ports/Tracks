@@ -9,6 +9,7 @@
 #include "Animation/PointDefinition.h"
 #include "Animation/Animation.h"
 #include "Hash.h"
+#include "TLogger.h"
 #include "Vector.h"
 #include "bindings.h"
 #include "binding_wrappers.hpp"
@@ -65,20 +66,21 @@ public:
   };
 
   std::unordered_map<std::string, rapidjson::Value const*, string_hash, string_equal> pointDefinitionsJSON;
-  std::unordered_map<std::pair<std::string, Tracks::ffi::WrapBaseValueType>, PointDefinitionW, PairHash, PairEqual> pointDefinitions;
+  std::unordered_map<std::pair<std::string, Tracks::ffi::WrapBaseValueType>, PointDefinitionW, PairHash, PairEqual>
+      pointDefinitions;
   std::vector<PointDefinitionW> pointDefinitionAnonymous;
 
   /**
    * @brief Get the Point Definition object and adds to map if named
-   * 
+   *
    * @param customData The object map e.g `{"_color": [[0,0], [1,1]]}` or `{"_position": "foo"}`
    * @param customDataKey The key to use to look in map
    * @param type Type of point definition
-   * @return PointDefinitionW 
+   * @return PointDefinitionW
    */
   [[nodiscard]]
   PointDefinitionW getPointDefinition(rapidjson::Value const& customData, std::string_view customDataKey,
-                                                       Tracks::ffi::WrapBaseValueType type) {
+                                      Tracks::ffi::WrapBaseValueType type) {
     auto pointData = Animation::ParsePointData(*this, customData, customDataKey, type);
 
     return pointData;
@@ -86,9 +88,9 @@ public:
 
   /**
    * @brief Adds a point definition to the beatmap. Keeps them alive.
-   * 
+   *
    * @param id ID of the point definition, or null if anonymous.
-   * @param pointDefinition 
+   * @param pointDefinition
    */
   void AddPointDefinition(std::optional<std::string_view> id, PointDefinitionW pointDefinition) {
     if (!pointDefinition) {
@@ -169,7 +171,6 @@ BeatmapAssociatedData& getBeatmapAD(CustomJSONData::JSONWrapper* customData);
 BeatmapObjectAssociatedData& getAD(CustomJSONData::JSONWrapper* customData);
 CustomEventAssociatedData& getEventAD(CustomJSONData::CustomEventData const* customEventData);
 
-
 } // namespace TracksAD
 
 namespace NEJSON {
@@ -177,13 +178,32 @@ static std::optional<TracksAD::TracksVector> ReadOptionalTracks(rapidjson::Value
                                                                 std::string_view const key,
                                                                 TracksAD::BeatmapAssociatedData& beatmapAD) {
   auto tracksIt = object.FindMember(key.data());
-  if (tracksIt != object.MemberEnd()) {
-    TracksAD::TracksVector tracks;
+  if (tracksIt == object.MemberEnd()) return std::nullopt;
 
-// Removed problematic std::hash specialization for std::pair<...> to avoid "specialization after instantiation" errors;
-// a custom PairHash / PairEqual in the TracksAD namespace is used instead.
-    return tracks;
+  TracksAD::TracksVector tracks;
+
+  auto size = tracksIt->value.IsString() ? 1 : tracksIt->value.Size();
+  tracks.reserve(size);
+
+  switch (tracksIt->value.GetType()) {
+    case rapidjson::kStringType: {
+      tracks.emplace_back(beatmapAD.getTrack(tracksIt->value.GetString()));
+      break;
+    }
+
+    case rapidjson::kArrayType: {
+      for (auto const& it : tracksIt->value.GetArray()) {
+        if (!it.IsString()) return std::nullopt;
+        tracks.emplace_back(beatmapAD.getTrack(it.GetString()));
+      }
+      break;
+    }
+
+    default:
+      TLogger::Logger.debug("Track object is not a string or array, why?");
+      return std::nullopt;
   }
-  return std::nullopt;
+
+  return tracks;
 }
 } // namespace NEJSON

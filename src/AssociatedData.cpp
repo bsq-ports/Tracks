@@ -23,8 +23,6 @@ BeatmapAssociatedData& getBeatmapAD(CustomJSONData::JSONWrapper* customData) {
   return std::any_cast<BeatmapAssociatedData&>(ad);
 }
 
-
-
 ::CustomEventAssociatedData& getEventAD(CustomJSONData::CustomEventData const* customEvent) {
   std::any& ad = customEvent->customData->associatedData['T'];
   if (!ad.has_value()) ad = std::make_any<CustomEventAssociatedData>();
@@ -195,24 +193,12 @@ void LoadTrackEvent(CustomJSONData::CustomEventData* customEventData, TracksAD::
   rapidjson::Value const& eventData = *customEventData->customData->value;
 
   eventAD.type = type;
-  auto const& trackJSON = eventData[(v2 ? TracksAD::Constants::V2_TRACK : TracksAD::Constants::TRACK).data()];
-  unsigned int trackSize = trackJSON.IsArray() ? trackJSON.Size() : 1;
 
-  sbo::small_vector<TrackW, 1> tracks;
-  tracks.reserve(trackSize);
+  auto tracks = NEJSON::ReadOptionalTracks(
+                    eventData, v2 ? TracksAD::Constants::V2_TRACK.data() : TracksAD::Constants::TRACK.data(), beatmapAD)
+                    .value_or(TracksAD::TracksVector{});
 
-  if (trackJSON.IsArray()) {
-    for (auto const& track : trackJSON.GetArray()) {
-      if (!track.IsString()) {
-        TLogger::Logger.debug("Track in array is not a string, why?");
-        continue;
-      }
-
-      tracks.emplace_back(beatmapAD.getTrack(track.GetString()));
-    }
-  } else if (trackJSON.IsString()) {
-    tracks.emplace_back(beatmapAD.getTrack(trackJSON.GetString()));
-  } else {
+  if (tracks.empty()) {
     TLogger::Logger.debug("Track object is not a string or array, why?");
     eventAD.type = EventType::unknown;
     return;
@@ -275,7 +261,8 @@ void readBeatmapDataAD(CustomJSONData::CustomBeatmapData* beatmapData) {
     if (pointDefinitionsIt != customData.MemberEnd()) {
       rapidjson::Value const& pointDefinitions = pointDefinitionsIt->value;
       if (v2) {
-        for (rapidjson::Value::ConstValueIterator itr = pointDefinitions.Begin(); itr != pointDefinitions.End(); itr++) {
+        for (rapidjson::Value::ConstValueIterator itr = pointDefinitions.Begin(); itr != pointDefinitions.End();
+             itr++) {
           std::string pointName = (*itr)[Constants::V2_NAME.data()].GetString();
           CJDLogger::Logger.fmtLog<Paper::LogLevel::INF>("Added point {}", pointName);
           pointDataManager.AddPoint(pointName, (*itr)[Constants::V2_POINTS.data()]);
@@ -311,32 +298,9 @@ void readBeatmapDataAD(CustomJSONData::CustomBeatmapData* beatmapData) {
     if (customDataWrapper->value) {
       rapidjson::Value const& customData = *customDataWrapper->value;
       BeatmapObjectAssociatedData& ad = getAD(customDataWrapper);
-      TracksVector tracksAD;
-
-      auto trackIt = customData.FindMember(v2 ? Constants::V2_TRACK.data() : Constants::TRACK.data());
-      if (trackIt != customData.MemberEnd()) {
-        rapidjson::Value const& tracksObject = trackIt->value;
-
-        switch (tracksObject.GetType()) {
-        case rapidjson::Type::kArrayType: {
-          if (tracksObject.Empty()) break;
-
-          for (auto& trackElement : tracksObject.GetArray()) {
-            tracksAD.emplace_back(beatmapAD.getTrack(trackElement.GetString()));
-          }
-          break;
-        }
-        case rapidjson::Type::kStringType: {
-          tracksAD.emplace_back(beatmapAD.getTrack(tracksObject.GetString()));
-          break;
-        }
-
-        default: {
-          TLogger::Logger.error("Tracks object is not an array or a string, what? Why?");
-          break;
-        }
-        }
-      }
+      TracksVector tracksAD =
+          NEJSON::ReadOptionalTracks(customData, v2 ? Constants::V2_TRACK : Constants::TRACK, beatmapAD)
+              .value_or(TracksVector{});
 
       ad.tracks = tracksAD;
     }
