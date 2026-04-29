@@ -684,7 +684,7 @@ checksum = "756daf9b1013ebe47a8776667b466417e2d4c5679d441c26230efd9ef78692db"
 [[package]]
 name = "tracks_rs"
 version = "0.2.0"
-source = "git+https://github.com/bsq-ports/tracks-rs.git#33c876c8909cf34e697405648efac5fa0225b358"
+source = "git+https://github.com/bsq-ports/tracks-rs.git#86a20b405d640ebf81c040baedf0b8f64e90e919"
 dependencies = [
  "ahash",
  "cbindgen",

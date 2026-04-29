@@ -10,13 +10,20 @@ namespace Tracks {
 namespace ffi {
 #endif  // __cplusplus
 
-typedef enum WrapBaseValueType {
-  Unknown = -1,
+enum WrapBaseValueType
+#ifdef __cplusplus
+  : uint8_t
+#endif // __cplusplus
+ {
+  Unknown = UINT8_MAX,
   Vec3 = 0,
   Quat = 1,
   Vec4 = 2,
   Float = 3,
-} WrapBaseValueType;
+};
+#ifndef __cplusplus
+typedef uint8_t WrapBaseValueType;
+#endif // __cplusplus
 
 typedef enum Functions {
   EaseLinear,
@@ -192,7 +199,7 @@ typedef union WrapBaseValueUnion {
 } WrapBaseValueUnion;
 
 typedef struct WrapBaseValue {
-  enum WrapBaseValueType ty;
+  WrapBaseValueType ty;
   union WrapBaseValueUnion value;
 } WrapBaseValue;
 
@@ -424,8 +431,8 @@ struct WrappedValues base_provider_context_get_values_array(const struct BasePro
 /**
  * Get the type of the base provider value for `base` (Vec3/Quat/Vec4/Float)
  */
-enum WrapBaseValueType base_provider_context_get_type(const struct BaseProviderContext *ctx,
-                                                      const char *base);
+WrapBaseValueType base_provider_context_get_type(const struct BaseProviderContext *ctx,
+                                                 const char *base);
 
 /**
  * Call `update_providers` on the `BaseProviderContext` with a delta time.
@@ -558,7 +565,7 @@ void tracks_free_json_value(struct FFIJsonValue *json_value);
  * - This function may panic on invalid input; unwinding across the FFI boundary is undefined behaviour.
  */
 struct BasePointDefinition *tracks_make_base_point_definition(const struct FFIJsonValue *json,
-                                                              enum WrapBaseValueType ty,
+                                                              WrapBaseValueType ty,
                                                               struct BaseProviderContext *context);
 
 /**
@@ -607,7 +614,7 @@ bool tracks_base_point_definition_has_base_provider(const struct BasePointDefini
  * Safety:
  * - `point_definition` must be a valid, non-null pointer to a `BasePointDefinition`.
  */
-enum WrapBaseValueType tracks_base_point_definition_get_type(const struct BasePointDefinition *point_definition);
+WrapBaseValueType tracks_base_point_definition_get_type(const struct BasePointDefinition *point_definition);
 
 /**
  * FLOAT POINT DEFINITION
@@ -790,13 +797,13 @@ struct CValueNullable path_property_interpolate(PathProperty *ptr,
  * - `ptr` must be a valid pointer to a `PathProperty`.
  * - `context` must be a valid pointer to a `BaseProviderContext` for the duration of the call.
  */
-enum WrapBaseValueType path_property_get_type(const PathProperty *ptr);
+WrapBaseValueType path_property_get_type(const PathProperty *ptr);
 
 /**
  * # Safety
  * - `ptr` may be null; if non-null it must point to a valid `PathProperty`.
  */
-enum WrapBaseValueType property_get_type(const struct ValueProperty *ptr);
+WrapBaseValueType property_get_type(const struct ValueProperty *ptr);
 
 /**
  * # Safety
