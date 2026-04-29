@@ -2,6 +2,9 @@
 #include "Animation/PointDefinition.h"
 #include "Animation/Track.h"
 
+
+#include "Animation/Easings.h"
+
 namespace GlobalNamespace {
 class BeatmapCallbacksController;
 }
