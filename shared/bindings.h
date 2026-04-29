@@ -16,7 +16,6 @@ typedef enum WrapBaseValueType {
   Quat = 1,
   Vec4 = 2,
   Float = 3,
-  Vec2 = 4,
 } WrapBaseValueType;
 
 typedef enum Functions {
@@ -185,17 +184,11 @@ typedef struct WrapVec4 {
   float w;
 } WrapVec4;
 
-typedef struct WrapVec2 {
-  float x;
-  float y;
-} WrapVec2;
-
 typedef union WrapBaseValueUnion {
   struct WrapVec3 vec3;
   struct WrapQuat quat;
   struct WrapVec4 vec4;
   float float_v;
-  struct WrapVec2 vec2;
 } WrapBaseValueUnion;
 
 typedef struct WrapBaseValue {
