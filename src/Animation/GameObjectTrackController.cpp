@@ -115,7 +115,7 @@ void GameObjectTrackController::UpdateData(bool force) {
     // after
     rotation = track.GetPropertyNamed(PropertyNames::Rotation).GetQuat();
     localRotation = track.GetPropertyNamed(PropertyNames::LocalRotation).GetQuat(lastCheckedTime);
-    position = track.GetPropertyNamed(PropertyNames::Position).GetVec3();
+    position = track.GetPropertyNamed(PropertyNames::Position).GetVec3(lastCheckedTime);
     localPosition = track.GetPropertyNamed(PropertyNames::LocalPosition).GetVec3(lastCheckedTime);
     scale = track.GetPropertyNamed(PropertyNames::Scale).GetVec3(lastCheckedTime);
 
@@ -124,7 +124,7 @@ void GameObjectTrackController::UpdateData(bool force) {
     // now
     auto localRotations = Animation::getPropertiesQuat(tracks, PropertyNames::LocalRotation, lastCheckedTime);
     auto rotations = Animation::getPropertiesQuat(tracks, PropertyNames::Rotation, TimeUnit());
-    auto positions = Animation::getPropertiesVec3(tracks, PropertyNames::Position, TimeUnit());
+    auto positions = Animation::getPropertiesVec3(tracks, PropertyNames::Position, lastCheckedTime);
     auto localPositions = Animation::getPropertiesVec3(tracks, PropertyNames::LocalPosition, lastCheckedTime);
     auto scales = Animation::getPropertiesVec3(tracks, PropertyNames::Scale, lastCheckedTime);
 
