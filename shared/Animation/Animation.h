@@ -39,7 +39,7 @@ static auto getCurrentTime() {
  * Point definition is then cached in beatmap associated data
  *
  * @param beatmapAD The Beatmap context
- * @param customData the object containing the point data map e.g `{"_color": [[0,0], [1,1]]}` or `{"_posiiton":
+ * @param customData the object containing the point data map e.g `{"_color": [[0,0], [1,1]]}` or `{"_position":
  * "pointDef"}`
  * @param customDataKey the key to look for in customData
  * @param type The type of the point definition e.g float, vec3, quat or vec4
@@ -47,6 +47,22 @@ static auto getCurrentTime() {
  */
 PointDefinitionW ParsePointData(TracksAD::BeatmapAssociatedData& beatmapAD, rapidjson::Value const& customData,
                                 std::string_view customDataKey, Tracks::ffi::WrapBaseValueType type);
+
+/**
+ * @brief Parse point definition from custom data. 3 possible cases:
+ * 1. Point definition is a string, look up in beatmap associated data
+ * 2. Point definition is an object/array, create new point definition from it
+ * 3. Point definition is null/invalid, return null point definition
+ *
+ * Point definition is then cached in beatmap associated data
+ *
+ * @param beatmapAD The Beatmap context
+ * @param value The object containing point data e.g. `[[0,0], [1,1]]` or `"pointDef"`
+ * @param type The type of the point definition e.g float, vec3, quat or vec4
+ * @return PointDefinitionW
+ */
+PointDefinitionW ParsePointData(TracksAD::BeatmapAssociatedData& beatmapAD, rapidjson::Value const& value,
+                                Tracks::ffi::WrapBaseValueType type);
 
 #pragma region track_utils
 
