@@ -97,6 +97,21 @@ void GameObjectTrackController::UpdateData(bool force) {
     Destroy(this);
     return;
   }
+
+  // TEMPORARY Update tracks-rs to store lastCheckedTime per-track rather than per-property
+  for (auto track : tracks) {
+    auto property = track.GetPropertyNamed(PropertyNames::Rotation);
+    if (property.hasUpdated(property.GetValue(), lastCheckedTime)) {force = true; break;}
+    property = track.GetPropertyNamed(PropertyNames::LocalRotation);
+    if (property.hasUpdated(property.GetValue(), lastCheckedTime)) {force = true; break;}
+    property = track.GetPropertyNamed(PropertyNames::Position);
+    if (property.hasUpdated(property.GetValue(), lastCheckedTime)) {force = true; break;}
+    property = track.GetPropertyNamed(PropertyNames::LocalPosition);
+    if (property.hasUpdated(property.GetValue(), lastCheckedTime)) {force = true; break;}
+    property = track.GetPropertyNamed(PropertyNames::Scale);
+    if (property.hasUpdated(property.GetValue(), lastCheckedTime)) {force = true; break;}
+  }
+
   if (force) {
     lastCheckedTime = TimeUnit();
   }
@@ -113,7 +128,7 @@ void GameObjectTrackController::UpdateData(bool force) {
     CRASH_UNLESS(track.getTrackPtr());
 
     // after
-    rotation = track.GetPropertyNamed(PropertyNames::Rotation).GetQuat();
+    rotation = track.GetPropertyNamed(PropertyNames::Rotation).GetQuat(lastCheckedTime);
     localRotation = track.GetPropertyNamed(PropertyNames::LocalRotation).GetQuat(lastCheckedTime);
     position = track.GetPropertyNamed(PropertyNames::Position).GetVec3(lastCheckedTime);
     localPosition = track.GetPropertyNamed(PropertyNames::LocalPosition).GetVec3(lastCheckedTime);
@@ -123,7 +138,7 @@ void GameObjectTrackController::UpdateData(bool force) {
 
     // now
     auto localRotations = Animation::getPropertiesQuat(tracks, PropertyNames::LocalRotation, lastCheckedTime);
-    auto rotations = Animation::getPropertiesQuat(tracks, PropertyNames::Rotation, TimeUnit());
+    auto rotations = Animation::getPropertiesQuat(tracks, PropertyNames::Rotation, lastCheckedTime);
     auto positions = Animation::getPropertiesVec3(tracks, PropertyNames::Position, lastCheckedTime);
     auto localPositions = Animation::getPropertiesVec3(tracks, PropertyNames::LocalPosition, lastCheckedTime);
     auto scales = Animation::getPropertiesVec3(tracks, PropertyNames::Scale, lastCheckedTime);
