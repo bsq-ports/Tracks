@@ -2,6 +2,7 @@
 #include "THooks.h"
 #include "TLogger.h"
 #include "beatsaber-hook/shared/utils/hooking.hpp"
+#include "custom-types/shared/delegate.hpp"
 
 #include "Animation/GameObjectTrackController.hpp"
 
@@ -10,7 +11,16 @@
 #include "GlobalNamespace/PlayerSpecificSettings.hpp"
 #include "GlobalNamespace/ColorScheme.hpp"
 #include "GlobalNamespace/PlayerTransforms.hpp"
+#include "GlobalNamespace/ScoreController.hpp"
+#include "GlobalNamespace/IGameEnergyCounter.hpp"
+#include "GlobalNamespace/ComboController.hpp"
+#include "GlobalNamespace/RelativeScoreAndImmediateRankCounter.hpp"
+#include "GlobalNamespace/GameSongController.hpp"
+#include "GlobalNamespace/AudioTimeSyncController.hpp"
 #include "UnityEngine/Transform.hpp"
+#include "UnityEngine/AudioClip.hpp"
+#include "System/Action_1.hpp"
+#include "System/Action_2.hpp"
 
 #include "Animation/PointDefinition.h"
 #include "bindings.h"
@@ -35,6 +45,12 @@ MAKE_HOOK_MATCH(GameplayCoreInstaller_InstallBindings, &GlobalNamespace::Gamepla
   auto const& beatmapAD = TracksAD::getBeatmapAD(customBeatmap->customData);
 
   auto baseProviderContext = beatmapAD.GetBaseProviderContext();
+
+  baseProviderContext->SetFloatValue("baseSongLength", self->_sceneSetupData->songAudioClip ?
+                                                       self->_sceneSetupData->songAudioClip->length : 0);
+  baseProviderContext->SetFloatValue("baseMultiplier", 1);
+  baseProviderContext->SetFloatValue("baseRelativeScore", 1);
+  baseProviderContext->SetFloatValue("baseEnergy", 0.5);
 
   bool leftHanded = self->_sceneSetupData->playerSpecificSettings->leftHanded;
 
@@ -146,10 +162,90 @@ MAKE_HOOK_MATCH(PlayerTransforms_Update, &GlobalNamespace::PlayerTransforms::Upd
                                                                baseRightHandRotation.z, baseRightHandRotation.w });
 }
 
+MAKE_HOOK_MATCH(ScoreController_Start, &GlobalNamespace::ScoreController::Start, void,
+                GlobalNamespace::ScoreController* self) {
+  ScoreController_Start(self);
+
+  if (!tempCustomBeatmap)
+    return;
+  auto const& beatmapAD = TracksAD::getBeatmapAD(tempCustomBeatmap->customData);
+  auto baseProviderContext = beatmapAD.GetBaseProviderContext();
+
+  self->add_scoreDidChangeEvent(custom_types::MakeDelegate<System::Action_2<int, int>*>(std::function<void(int, int)>(
+    [self, baseProviderContext](int multipliedScore, int modifiedScore){
+      baseProviderContext->SetFloatValue("baseMultipliedScore", multipliedScore);
+      baseProviderContext->SetFloatValue("baseModifiedScore", modifiedScore);
+      baseProviderContext->SetFloatValue("baseImmediateMaxPossibleMultipliedScore", self->immediateMaxPossibleMultipliedScore);
+      baseProviderContext->SetFloatValue("baseImmediateMaxPossibleModifiedScore", self->immediateMaxPossibleModifiedScore);
+    }
+  )));
+
+  self->add_multiplierDidChangeEvent(custom_types::MakeDelegate<System::Action_2<int, float>*>(std::function<void(int, float)>(
+    [baseProviderContext](int multiplier, float normalizedProgress){
+      baseProviderContext->SetFloatValue("baseMultiplier", multiplier);
+    }
+  )));
+
+  self->_gameEnergyCounter->add_gameEnergyDidChangeEvent(custom_types::MakeDelegate<System::Action_1<float>*>(std::function<void(float)>(
+    [baseProviderContext](float energy){
+      baseProviderContext->SetFloatValue("baseEnergy", energy);
+    }
+  )));
+}
+
+MAKE_HOOK_MATCH(ComboController_Start, &GlobalNamespace::ComboController::Start, void,
+                GlobalNamespace::ComboController* self) {
+  ComboController_Start(self);
+
+  if (!tempCustomBeatmap)
+    return;
+  auto const& beatmapAD = TracksAD::getBeatmapAD(tempCustomBeatmap->customData);
+  auto baseProviderContext = beatmapAD.GetBaseProviderContext();
+
+  self->add_comboDidChangeEvent(custom_types::MakeDelegate<System::Action_1<int>*>(std::function<void(int)>(
+    [baseProviderContext](int combo){
+      baseProviderContext->SetFloatValue("baseCombo", combo);
+    })));
+}
+
+MAKE_HOOK_MATCH(RelativeScoreAndImmediateRankCounter_UpdateRelativeScoreAndImmediateRank,
+                &GlobalNamespace::RelativeScoreAndImmediateRankCounter::UpdateRelativeScoreAndImmediateRank,
+                void, GlobalNamespace::RelativeScoreAndImmediateRankCounter* self,
+                int score, int modifiedScore, int maxPossibleScore, int maxPossibleModifiedScore) {
+  RelativeScoreAndImmediateRankCounter_UpdateRelativeScoreAndImmediateRank(
+      self, score, modifiedScore, maxPossibleScore, maxPossibleModifiedScore);
+
+  if (!tempCustomBeatmap)
+    return;
+  auto const& beatmapAD = TracksAD::getBeatmapAD(tempCustomBeatmap->customData);
+  auto baseProviderContext = beatmapAD.GetBaseProviderContext();
+
+  baseProviderContext->SetFloatValue("baseRelativeScore", self->relativeScore);
+}
+
+MAKE_HOOK_MATCH(GameSongController_LateUpdate, &GlobalNamespace::GameSongController::LateUpdate, void,
+                GlobalNamespace::GameSongController* self) {
+  GameSongController_LateUpdate(self);
+
+  if (self->_songDidFinish)
+    return;
+
+  if (!tempCustomBeatmap)
+    return;
+  auto const& beatmapAD = TracksAD::getBeatmapAD(tempCustomBeatmap->customData);
+  auto baseProviderContext = beatmapAD.GetBaseProviderContext();
+
+  baseProviderContext->SetFloatValue("baseSongTime", self->_audioTimeSyncController->_songTime);
+}
+
 void InstallBaseProviderHooks() {
   auto logger = Paper::ConstLoggerContext("Tracks | InstallBaseProviderHooks");
   INSTALL_HOOK(logger, GameplayCoreInstaller_InstallBindings);
   INSTALL_HOOK(logger, PlayerTransforms_Update);
+  INSTALL_HOOK(logger, ScoreController_Start);
+  INSTALL_HOOK(logger, ComboController_Start);
+  INSTALL_HOOK(logger, RelativeScoreAndImmediateRankCounter_UpdateRelativeScoreAndImmediateRank);
+  INSTALL_HOOK(logger, GameSongController_LateUpdate);
 }
 
 TInstallHooks(InstallBaseProviderHooks)
