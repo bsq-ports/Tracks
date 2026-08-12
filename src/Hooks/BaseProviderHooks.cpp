@@ -3,6 +3,7 @@
 #include "TLogger.h"
 #include "beatsaber-hook/shared/utils/hooking.hpp"
 #include "custom-types/shared/delegate.hpp"
+#include "Zenject/DiContainer.hpp"
 
 #include "Animation/GameObjectTrackController.hpp"
 
@@ -17,6 +18,9 @@
 #include "GlobalNamespace/RelativeScoreAndImmediateRankCounter.hpp"
 #include "GlobalNamespace/GameSongController.hpp"
 #include "GlobalNamespace/AudioTimeSyncController.hpp"
+#include "GlobalNamespace/BeatmapObjectSpawnController.hpp"
+#include "GlobalNamespace/PlayerHeightDetector.hpp"
+#include "GlobalNamespace/VariableMovementDataProvider.hpp"
 #include "UnityEngine/Transform.hpp"
 #include "UnityEngine/AudioClip.hpp"
 #include "System/Action_1.hpp"
@@ -31,11 +35,18 @@ using namespace UnityEngine;
 
 // i hate this
 static SafePtr<CustomBeatmapData> tempCustomBeatmap;
+static SafePtr<PlayerSpecificSettings> tempPlayerSpecificSettings;
+static SafePtr<VariableMovementDataProvider> tempVariableMovementDataProvider;
 
 MAKE_HOOK_MATCH(GameplayCoreInstaller_InstallBindings, &GlobalNamespace::GameplayCoreInstaller::InstallBindings, void,
                 GlobalNamespace::GameplayCoreInstaller* self) {
 
   GameplayCoreInstaller_InstallBindings(self);
+
+  tempCustomBeatmap = nullptr;
+  tempPlayerSpecificSettings = nullptr;
+  tempVariableMovementDataProvider = nullptr;
+
   auto colorScheme = self->_sceneSetupData->colorScheme;
   auto beatmap = self->_sceneSetupData->get_transformedBeatmapData();
   auto customBeatmapOpt = il2cpp_utils::try_cast<CustomJSONData::CustomBeatmapData>(beatmap);
@@ -51,6 +62,12 @@ MAKE_HOOK_MATCH(GameplayCoreInstaller_InstallBindings, &GlobalNamespace::Gamepla
   baseProviderContext->SetFloatValue("baseMultiplier", 1);
   baseProviderContext->SetFloatValue("baseRelativeScore", 1);
   baseProviderContext->SetFloatValue("baseEnergy", 0.5);
+
+  auto playerSpecificSettings = tempPlayerSpecificSettings = self->_sceneSetupData->playerSpecificSettings;
+  if (!playerSpecificSettings->_automaticPlayerHeight)
+    baseProviderContext->SetFloatValue("basePlayerHeight", playerSpecificSettings->playerHeight);
+
+  tempVariableMovementDataProvider = self->Container->Resolve<VariableMovementDataProvider*>();
 
   bool leftHanded = self->_sceneSetupData->playerSpecificSettings->leftHanded;
 
@@ -236,6 +253,35 @@ MAKE_HOOK_MATCH(GameSongController_LateUpdate, &GlobalNamespace::GameSongControl
   auto baseProviderContext = beatmapAD.GetBaseProviderContext();
 
   baseProviderContext->SetFloatValue("baseSongTime", self->_audioTimeSyncController->_songTime);
+
+  if (tempVariableMovementDataProvider) {
+    baseProviderContext->SetFloatValue("baseNoteJumpMovementSpeed", tempVariableMovementDataProvider->noteJumpSpeed);
+    baseProviderContext->SetFloatValue("baseJumpDistance", tempVariableMovementDataProvider->jumpDistance);
+  }
+}
+
+MAKE_HOOK_MATCH(BeatmapObjectSpawnController_Start2, &GlobalNamespace::BeatmapObjectSpawnController::Start, void,
+                GlobalNamespace::BeatmapObjectSpawnController* self) {
+  BeatmapObjectSpawnController_Start2(self);
+
+  if (!tempCustomBeatmap)
+    return;
+  auto const& beatmapAD = TracksAD::getBeatmapAD(tempCustomBeatmap->customData);
+  auto baseProviderContext = beatmapAD.GetBaseProviderContext();
+
+  baseProviderContext->SetFloatValue("baseNoteJumpStartBeatOffset", self->_initData->noteJumpValue);
+}
+
+MAKE_HOOK_MATCH(PlayerHeightDetector_LateUpdate, &GlobalNamespace::PlayerHeightDetector::LateUpdate, void,
+                GlobalNamespace::PlayerHeightDetector* self) {
+  PlayerHeightDetector_LateUpdate(self);
+
+  if (!tempCustomBeatmap)
+    return;
+  auto const& beatmapAD = TracksAD::getBeatmapAD(tempCustomBeatmap->customData);
+  auto baseProviderContext = beatmapAD.GetBaseProviderContext();
+
+  baseProviderContext->SetFloatValue("basePlayerHeight", self->playerHeight);
 }
 
 void InstallBaseProviderHooks() {
@@ -246,6 +292,8 @@ void InstallBaseProviderHooks() {
   INSTALL_HOOK(logger, ComboController_Start);
   INSTALL_HOOK(logger, RelativeScoreAndImmediateRankCounter_UpdateRelativeScoreAndImmediateRank);
   INSTALL_HOOK(logger, GameSongController_LateUpdate);
+  INSTALL_HOOK(logger, BeatmapObjectSpawnController_Start2);
+  INSTALL_HOOK(logger, PlayerHeightDetector_LateUpdate)
 }
 
 TInstallHooks(InstallBaseProviderHooks)
