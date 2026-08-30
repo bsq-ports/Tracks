@@ -5,6 +5,8 @@
 #include "UnityEngine/Transform.hpp"
 
 #include "Track.h"
+#include "./interop/track_wrapper.h"
+#include "./interop.h"
 
 #include <utility>
 #include <vector>
