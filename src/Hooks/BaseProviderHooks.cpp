@@ -21,6 +21,7 @@
 #include "GlobalNamespace/BeatmapObjectSpawnController.hpp"
 #include "GlobalNamespace/PlayerHeightDetector.hpp"
 #include "GlobalNamespace/VariableMovementDataProvider.hpp"
+#include "GlobalNamespace/PlayerVRControllersManager.hpp"
 #include "UnityEngine/Transform.hpp"
 #include "UnityEngine/AudioClip.hpp"
 #include "System/Action_1.hpp"
@@ -37,6 +38,7 @@ using namespace UnityEngine;
 static SafePtr<CustomBeatmapData> tempCustomBeatmap;
 static SafePtr<PlayerSpecificSettings> tempPlayerSpecificSettings;
 static SafePtr<VariableMovementDataProvider> tempVariableMovementDataProvider;
+static SafePtr<PlayerVRControllersManager> tempPlayerVRControllersManager;
 
 MAKE_HOOK_MATCH(GameplayCoreInstaller_InstallBindings, &GlobalNamespace::GameplayCoreInstaller::InstallBindings, void,
                 GlobalNamespace::GameplayCoreInstaller* self) {
@@ -46,6 +48,7 @@ MAKE_HOOK_MATCH(GameplayCoreInstaller_InstallBindings, &GlobalNamespace::Gamepla
   tempCustomBeatmap = nullptr;
   tempPlayerSpecificSettings = nullptr;
   tempVariableMovementDataProvider = nullptr;
+  tempPlayerVRControllersManager = nullptr;
 
   auto colorScheme = self->_sceneSetupData->colorScheme;
   auto beatmap = self->_sceneSetupData->get_transformedBeatmapData();
@@ -68,6 +71,7 @@ MAKE_HOOK_MATCH(GameplayCoreInstaller_InstallBindings, &GlobalNamespace::Gamepla
     baseProviderContext->SetFloatValue("basePlayerHeight", playerSpecificSettings->playerHeight);
 
   tempVariableMovementDataProvider = self->Container->Resolve<VariableMovementDataProvider*>();
+  tempPlayerVRControllersManager = self->Container->Resolve<PlayerVRControllersManager*>();
 
   bool leftHanded = self->_sceneSetupData->playerSpecificSettings->leftHanded;
 
@@ -113,7 +117,7 @@ MAKE_HOOK_MATCH(PlayerTransforms_Update, &GlobalNamespace::PlayerTransforms::Upd
                 GlobalNamespace::PlayerTransforms* self) {
   PlayerTransforms_Update(self);
 
-  if (!tempCustomBeatmap) {
+  if (!tempCustomBeatmap || !tempPlayerVRControllersManager) {
     return;
   }
 
@@ -121,10 +125,8 @@ MAKE_HOOK_MATCH(PlayerTransforms_Update, &GlobalNamespace::PlayerTransforms::Upd
 
   auto baseProviderContext = beatmapAD.GetBaseProviderContext();
 
-  auto leftHand = self->_leftHandTransform;
-  // leftHand = leftHand->parent == nullptr ? leftHand : leftHand->parent;
-  auto rightHand = self->_rightHandTransform;
-  // rightHand = rightHand->parent == nullptr ? rightHand : rightHand->parent;
+  auto leftHand = tempPlayerVRControllersManager->leftHandVRController->transform;
+  auto rightHand = tempPlayerVRControllersManager->rightHandVRController->transform;
 
   auto baseHeadLocalPosition = self->_headTransform->localPosition;
   auto baseHeadLocalRotation = self->_headTransform->localRotation;
@@ -136,7 +138,6 @@ MAKE_HOOK_MATCH(PlayerTransforms_Update, &GlobalNamespace::PlayerTransforms::Upd
   auto baseLeftHandLocalScale = leftHand->localScale;
   auto baseLeftHandPosition = leftHand->position;
   auto baseLeftHandRotation = leftHand->rotation;
-
   auto baseRightHandLocalPosition = rightHand->localPosition;
   auto baseRightHandLocalRotation = rightHand->localRotation;
   auto baseRightHandLocalScale = rightHand->localScale;
