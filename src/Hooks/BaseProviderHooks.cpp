@@ -1,5 +1,6 @@
 #include "AssociatedData.h"
 #include "THooks.h"
+#include "GameplayLifetime.hpp"
 #include "TLogger.h"
 #include "beatsaber-hook/shared/utils/hooking.hpp"
 #include "custom-types/shared/delegate.hpp"
@@ -39,6 +40,16 @@ static SafePtr<CustomBeatmapData> tempCustomBeatmap;
 static SafePtr<PlayerSpecificSettings> tempPlayerSpecificSettings;
 static SafePtr<VariableMovementDataProvider> tempVariableMovementDataProvider;
 static SafePtr<PlayerVRControllersManager> tempPlayerVRControllersManager;
+
+void ClearTracksGameplayReferences() {
+  const int rootCount = int(bool(tempCustomBeatmap)) + int(bool(tempPlayerSpecificSettings)) +
+      int(bool(tempVariableMovementDataProvider));
+  tempCustomBeatmap = nullptr;
+  tempPlayerSpecificSettings = nullptr;
+  tempVariableMovementDataProvider = nullptr;
+  ClearTracksCallbackReferences();
+  Paper::ConstLoggerContext("Tracks | GameplayLifetime").info("Released GameCore references: baseRoots={}", rootCount);
+}
 
 MAKE_HOOK_MATCH(GameplayCoreInstaller_InstallBindings, &GlobalNamespace::GameplayCoreInstaller::InstallBindings, void,
                 GlobalNamespace::GameplayCoreInstaller* self) {

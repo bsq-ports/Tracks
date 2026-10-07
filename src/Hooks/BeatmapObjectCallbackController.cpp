@@ -1,5 +1,6 @@
 #include "AssociatedData.h"
 #include "THooks.h"
+#include "GameplayLifetime.hpp"
 #include "beatsaber-hook/shared/utils/hooking.hpp"
 #include "Animation/Events.h"
 
@@ -32,6 +33,11 @@ custom_types::Helpers::Coroutine updateCoroutines(BeatmapCallbacksController* se
 
 BeatmapCallbacksController* controller;
 SafePtr<BpmController> TracksStatic::bpmController;
+
+void ClearTracksCallbackReferences() {
+  controller = nullptr;
+  TracksStatic::bpmController = nullptr;
+}
 
 MAKE_HOOK_MATCH(BeatmapObjectCallbackController_Start, &BeatmapCallbacksController::ManualUpdate, void,
                 BeatmapCallbacksController* self, float songTime) {
