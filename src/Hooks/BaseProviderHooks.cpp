@@ -1,7 +1,8 @@
+#include "beatsaber-hook/shared/safeptr.hpp"
 #include "AssociatedData.h"
 #include "THooks.h"
 #include "TLogger.h"
-#include "beatsaber-hook/shared/utils/hooking.hpp"
+#include "beatsaber-hook/shared/hooking.hpp"
 #include "custom-types/shared/delegate.hpp"
 #include "Zenject/DiContainer.hpp"
 
@@ -35,10 +36,10 @@ using namespace GlobalNamespace;
 using namespace UnityEngine;
 
 // i hate this
-static SafePtr<CustomBeatmapData> tempCustomBeatmap;
-static SafePtr<PlayerSpecificSettings> tempPlayerSpecificSettings;
-static SafePtr<VariableMovementDataProvider> tempVariableMovementDataProvider;
-static SafePtr<PlayerVRControllersManager> tempPlayerVRControllersManager;
+static safe_ptr<CustomBeatmapData*> tempCustomBeatmap;
+static safe_ptr<PlayerSpecificSettings*> tempPlayerSpecificSettings;
+static safe_ptr<VariableMovementDataProvider*> tempVariableMovementDataProvider;
+static safe_ptr<PlayerVRControllersManager*> tempPlayerVRControllersManager;
 
 MAKE_HOOK_MATCH(GameplayCoreInstaller_InstallBindings, &GlobalNamespace::GameplayCoreInstaller::InstallBindings, void,
                 GlobalNamespace::GameplayCoreInstaller* self) {
@@ -52,10 +53,10 @@ MAKE_HOOK_MATCH(GameplayCoreInstaller_InstallBindings, &GlobalNamespace::Gamepla
 
   auto colorScheme = self->_sceneSetupData->colorScheme;
   auto beatmap = self->_sceneSetupData->get_transformedBeatmapData();
-  auto customBeatmapOpt = il2cpp_utils::try_cast<CustomJSONData::CustomBeatmapData>(beatmap);
+  auto customBeatmapOpt = i2c::try_cast<CustomJSONData::CustomBeatmapData*>(beatmap);
 
-  if (!customBeatmapOpt.has_value()) return;
-  auto customBeatmap = tempCustomBeatmap = customBeatmapOpt.value();
+  if (!customBeatmapOpt) return;
+  auto customBeatmap = tempCustomBeatmap = customBeatmapOpt;
   auto const& beatmapAD = TracksAD::getBeatmapAD(customBeatmap->customData);
 
   auto baseProviderContext = beatmapAD.GetBaseProviderContext();

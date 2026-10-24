@@ -1,5 +1,5 @@
 #include "THooks.h"
-#include "beatsaber-hook/shared/utils/hooking.hpp"
+#include "beatsaber-hook/shared/hooking.hpp"
 
 #include "Animation/GameObjectTrackController.hpp"
 

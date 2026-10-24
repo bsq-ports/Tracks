@@ -7,12 +7,12 @@
 // speed up interface calls
 
 template<typename Concrete>
-struct BS_HOOKS_HIDDEN VariableMovementWrapper {
+struct BS_HOOK_HIDDEN VariableMovementWrapper {
   GlobalNamespace::IVariableMovementDataProvider* variable;
   Concrete* concrete;
 
   VariableMovementWrapper(GlobalNamespace::IVariableMovementDataProvider* variable) : variable(variable) {
-    concrete = il2cpp_utils::try_cast<Concrete>(variable).value_or(nullptr);
+    concrete = i2c::try_cast<Concrete*>(variable);
   }
 
   constexpr VariableMovementWrapper(VariableMovementWrapper const&) = default;

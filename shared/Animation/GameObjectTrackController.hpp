@@ -1,4 +1,5 @@
 #pragma once
+#include "beatsaber-hook/shared/callback.hpp"
 
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/MonoBehaviour.hpp"
@@ -22,9 +23,9 @@ struct GameObjectTrackControllerData {
   std::vector<TrackW> _track;
   bool v2;
 
-  UnorderedEventCallback<> PositionUpdate;
-  UnorderedEventCallback<> ScaleUpdate;
-  UnorderedEventCallback<> RotationUpdate;
+  unordered_event_callback<> PositionUpdate;
+  unordered_event_callback<> ScaleUpdate;
+  unordered_event_callback<> RotationUpdate;
 };
 } // namespace Tracks
 

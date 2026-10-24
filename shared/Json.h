@@ -4,7 +4,7 @@
 // #pragma once
 
 // #include <optional>
-// #include "beatsaber-hook/shared/config/rapidjson-utils.hpp"
+// #include "beatsaber-hook/shared/rapidjson.hpp"
 // #include "Vector.h"
 // #include "TLogger.h"
 

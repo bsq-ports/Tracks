@@ -1,7 +1,8 @@
 #pragma once
+#include "beatsaber-hook/shared/safeptr.hpp"
 
 #include "GlobalNamespace/BpmController.hpp"
 
 struct __attribute__((visibility("default"))) TracksStatic {
-  static SafePtr<GlobalNamespace::BpmController> bpmController;
+  static safe_ptr<GlobalNamespace::BpmController*> bpmController;
 };

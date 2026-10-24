@@ -1,4 +1,4 @@
-#include "beatsaber-hook/shared/utils/hooking.hpp"
+#include "beatsaber-hook/shared/hooking.hpp"
 
 #include "GlobalNamespace/BeatmapCallbacksController.hpp"
 #include "GlobalNamespace/BeatmapData.hpp"
@@ -8,7 +8,7 @@
 
 #include "UnityEngine/Resources.hpp"
 
-#include "beatsaber-hook/shared/utils/hooking.hpp"
+#include "beatsaber-hook/shared/hooking.hpp"
 #include "bindings.h"
 #include "custom-json-data/shared/CustomEventData.h"
 #include "custom-json-data/shared/CustomBeatmapData.h"
@@ -41,7 +41,7 @@ MAKE_HOOK_MATCH(BeatmapObjectSpawnController_Start, &BeatmapObjectSpawnControlle
 
 void Events::UpdateCoroutines(BeatmapCallbacksController* callbackController) {
   auto songTime = callbackController->_songTime;
-  auto customBeatmapData = il2cpp_utils::cast<CustomJSONData::CustomBeatmapData>(callbackController->_beatmapData);
+  auto customBeatmapData = i2c::cast<CustomJSONData::CustomBeatmapData*>(callbackController->_beatmapData);
 
   auto& beatmapAD = getBeatmapAD(customBeatmapData->customData);
 
@@ -72,7 +72,7 @@ void CustomEventCallback(BeatmapCallbacksController* callbackController,
 
   CustomEventAssociatedData const& eventAD = getEventAD(customEventData);
 
-  auto* customBeatmapData = il2cpp_utils::cast<CustomJSONData::CustomBeatmapData>(callbackController->_beatmapData);
+  auto* customBeatmapData = i2c::cast<CustomJSONData::CustomBeatmapData*>(callbackController->_beatmapData);
   TracksAD::BeatmapAssociatedData& beatmapAD = TracksAD::getBeatmapAD(customBeatmapData->customData);
 
   // fail safe, idek why this needs to be done smh

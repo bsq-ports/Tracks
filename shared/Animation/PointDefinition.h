@@ -5,7 +5,7 @@
 #include <variant>
 
 #include "../Vector.h"
-#include "beatsaber-hook/shared/config/rapidjson-utils.hpp"
+#include "beatsaber-hook/shared/rapidjson.hpp"
 #include "Easings.h"
 #include "../Hash.h"
 #include "UnityEngine/Color.hpp"

@@ -6,8 +6,8 @@ include(qpm_defines.cmake)
 project(${COMPILE_ID})
 
 # c++ standard
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED 20)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 message("Building ${COMPILE_ID} version ${MOD_VERSION} with ID ${MOD_ID} ${CMAKE_BUILD_TYPE}")
 
@@ -42,8 +42,6 @@ add_compile_definitions(USE_CODEGEN_FIELDS)
 RECURSE_FILES(cpp_file_list ${SOURCE_DIR}/*.cpp)
 RECURSE_FILES(c_file_list ${SOURCE_DIR}/*.c)
 
-RECURSE_FILES(inline_hook_c ${EXTERN_DIR}/includes/beatsaber-hook/shared/inline-hook/*.c)
-RECURSE_FILES(inline_hook_cpp ${EXTERN_DIR}/includes/beatsaber-hook/shared/inline-hook/*.cpp)
 
 # add all src files to compile
 add_library(
@@ -51,8 +49,6 @@ add_library(
         SHARED
         ${cpp_file_list}
         ${c_file_list}
-        ${inline_hook_c}
-        ${inline_hook_cpp}
         ${TRACKS_RS_LINK_PATH}/libtracks_rs_link.a
 )
 

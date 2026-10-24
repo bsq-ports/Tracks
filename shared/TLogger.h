@@ -1,5 +1,5 @@
 #pragma once
-#include "beatsaber-hook/shared/utils/logging.hpp"
+#include "beatsaber-hook/shared/utils.hpp"
 #include "custom-json-data/shared/CJDLogger.h"
 
 class TLogger {

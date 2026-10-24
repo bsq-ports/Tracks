@@ -1,3 +1,4 @@
+#include <functional>
 #include "Animation/GameObjectTrackController.hpp"
 
 #include "Animation/Animation.h"
@@ -123,8 +124,8 @@ void GameObjectTrackController::UpdateData(bool force) {
   std::optional<NEVector::Vector3> scale;
 
   if (tracks.size() == 1) {
-    auto track = tracks.front();
-    CRASH_UNLESS(track);
+    auto const& track = tracks.front();
+    CRASH_UNLESS(static_cast<bool>(track));
     CRASH_UNLESS(track.getTrackPtr());
 
     // after
@@ -161,15 +162,15 @@ void GameObjectTrackController::UpdateData(bool force) {
   auto transform = origin;
 
   static auto Transform_Position =
-      il2cpp_utils::il2cpp_type_check::FPtrWrapper<&UnityEngine::Transform::set_position>::get();
+      std::mem_fn(&UnityEngine::Transform::set_position);
   static auto Transform_LocalPosition =
-      il2cpp_utils::il2cpp_type_check::FPtrWrapper<&UnityEngine::Transform::set_localPosition>::get();
+      std::mem_fn(&UnityEngine::Transform::set_localPosition);
   static auto Transform_Rotation =
-      il2cpp_utils::il2cpp_type_check::FPtrWrapper<&UnityEngine::Transform::set_rotation>::get();
+      std::mem_fn(&UnityEngine::Transform::set_rotation);
   static auto Transform_LocalRotation =
-      il2cpp_utils::il2cpp_type_check::FPtrWrapper<&UnityEngine::Transform::set_localRotation>::get();
+      std::mem_fn(&UnityEngine::Transform::set_localRotation);
   static auto Transform_Scale =
-      il2cpp_utils::il2cpp_type_check::FPtrWrapper<&UnityEngine::Transform::set_localScale>::get();
+      std::mem_fn(&UnityEngine::Transform::set_localScale);
   if (localRotation) {
     Transform_LocalRotation(transform, localRotation.value());
     data->RotationUpdate.invoke();

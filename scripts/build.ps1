@@ -22,14 +22,18 @@ if (($clean.IsPresent) -or (-not (Test-Path -Path "build")))
 # build the rust code
 cd ./tracks_rs_link
 if ($release.IsPresent) {
-    cargo ndk -t arm64-v8a -o build build --release
+    cargo ndk -t arm64-v8a build --release --locked
 } else {
-    cargo ndk -t arm64-v8a -o build build
+    cargo ndk -t arm64-v8a build --locked
 }
+$rustExitCode = $LASTEXITCODE
 cd ..
+if ($rustExitCode -ne 0) { exit $rustExitCode }
 
 # Set build type based on release flag
 $buildType = if ($release.IsPresent) { "RelWithDebInfo" } else { "Debug" }
 
 & cmake -B ./build -G "Ninja" -DCMAKE_BUILD_TYPE="$buildType" .
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & cmake --build ./build 
+exit $LASTEXITCODE

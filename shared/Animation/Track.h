@@ -10,7 +10,10 @@
 #include "PointDefinition.h"
 #include "UnityEngine/GameObject.hpp"
 
-#include "beatsaber-hook/shared/utils/typedefs-wrappers.hpp"
+#include "beatsaber-hook/shared/safeptr.hpp"
+#include "beatsaber-hook/shared/arrayw.hpp"
+#include "beatsaber-hook/shared/listw.hpp"
+#include "beatsaber-hook/shared/stringw.hpp"
 
 #include <chrono>
 

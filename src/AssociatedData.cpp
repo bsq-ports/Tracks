@@ -235,9 +235,9 @@ void LoadTrackEvent(CustomJSONData::CustomEventData* customEventData, TracksAD::
 }
 
 void readBeatmapDataAD(CustomJSONData::CustomBeatmapData* beatmapData) {
-  static auto* customObstacleDataClass = classof(CustomJSONData::CustomObstacleData*);
-  static auto* customNoteDataClass = classof(CustomJSONData::CustomNoteData*);
-  static auto* customSliderDataClass = classof(CustomJSONData::CustomSliderData*);
+  static auto* customObstacleDataClass = i2c::class_of<CustomJSONData::CustomObstacleData*>();
+  static auto* customNoteDataClass = i2c::class_of<CustomJSONData::CustomNoteData*>();
+  static auto* customSliderDataClass = i2c::class_of<CustomJSONData::CustomSliderData*>();
 
   BeatmapAssociatedData& beatmapAD = getBeatmapAD(beatmapData->customData);
   bool v2 = beatmapData->v2orEarlier;
