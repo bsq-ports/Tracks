@@ -33,6 +33,18 @@ using namespace TracksAD;
 BeatmapObjectSpawnController* spawnController;
 // BeatmapObjectSpawnController.cpp
 
+namespace {
+// Keep the new queue in the JSON wrapper's associated data so its lifetime follows
+// the beatmap, without changing the public BeatmapAssociatedData layout.
+constexpr char AnimateTrackQueueKey = 't';
+
+std::shared_ptr<CoroutineManagerW> GetAnimateTrackQueue(CustomJSONData::JSONWrapper* customData) {
+  auto& queue = customData->associatedData[AnimateTrackQueueKey];
+  if (!queue.has_value()) queue = std::make_shared<CoroutineManagerW>();
+  return std::any_cast<std::shared_ptr<CoroutineManagerW>>(queue);
+}
+} // namespace
+
 MAKE_HOOK_MATCH(BeatmapObjectSpawnController_Start, &BeatmapObjectSpawnController::Start, void,
                 BeatmapObjectSpawnController* self) {
   spawnController = self;
@@ -50,6 +62,19 @@ void Events::UpdateCoroutines(BeatmapCallbacksController* callbackController) {
   auto tracksHolder = beatmapAD.GetTracksHolder();
   baseManager->Update(UnityEngine::Time::get_deltaTime());
   coroutine->PollCoroutines(songTime, *baseManager, *tracksHolder);
+}
+
+void Events::UpdateAnimateTrackCoroutines(BeatmapCallbacksController* callbackController) {
+  auto customBeatmapData = i2c::cast<CustomJSONData::CustomBeatmapData*>(callbackController->_beatmapData);
+  auto customData = customBeatmapData->customData;
+  auto queue = customData->associatedData.find(AnimateTrackQueueKey);
+  if (queue == customData->associatedData.end()) return;
+
+  auto& beatmapAD = getBeatmapAD(customData);
+  auto const& coroutine = std::any_cast<std::shared_ptr<CoroutineManagerW> const&>(queue->second);
+  // Base providers retain their existing once-per-frame update in UpdateCoroutines.
+  coroutine->PollCoroutines(callbackController->_songTime, *beatmapAD.GetBaseProviderContext(),
+                            *beatmapAD.GetTracksHolder());
 }
 
 void CustomEventCallback(BeatmapCallbacksController* callbackController,
@@ -96,7 +121,11 @@ void CustomEventCallback(BeatmapCallbacksController* callbackController,
 
   auto bpm = TracksStatic::bpmController->currentBpm; // spawnController->get_currentBpm()
 
-  auto coroutineManager = beatmapAD.GetCoroutineManager();
+  // PC advances AnimateTrack at end of frame; AssignPathAnimation yields null.
+  // Starting an event still evaluates its first (or zero-duration final) value now.
+  auto coroutineManager = eventAD.type == EventType::animateTrack
+                              ? GetAnimateTrackQueue(customBeatmapData->customData)
+                              : beatmapAD.GetCoroutineManager();
   auto baseManager = beatmapAD.GetBaseProviderContext();
   auto tracksHolder = beatmapAD.GetTracksHolder();
 

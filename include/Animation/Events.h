@@ -10,6 +10,7 @@ namespace Events {
 
 void AddEventCallbacks();
 void UpdateCoroutines(GlobalNamespace::BeatmapCallbacksController* callbackController);
+void UpdateAnimateTrackCoroutines(GlobalNamespace::BeatmapCallbacksController* callbackController);
 
 struct AnimateTrackContext {
   PointDefinitionW points;
