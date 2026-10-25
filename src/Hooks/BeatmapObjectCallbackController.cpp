@@ -1,15 +1,11 @@
-#include "beatsaber-hook/shared/safeptr.hpp"
 #include "THooks.h"
 #include "beatsaber-hook/shared/hooking.hpp"
 #include "Animation/CoroutineRunner.hpp"
 
 #include "GlobalNamespace/BeatmapCallbacksController.hpp"
 #include "GlobalNamespace/BpmController.hpp"
-#include "StaticHolders.hpp"
 
 using namespace GlobalNamespace;
-
-safe_ptr<BpmController*> TracksStatic::bpmController;
 
 MAKE_HOOK_MATCH(BeatmapObjectCallbackController_Start, &BeatmapCallbacksController::ManualUpdate, void,
                 BeatmapCallbacksController* self, float songTime) {
@@ -26,7 +22,7 @@ MAKE_HOOK_MATCH(BeatmapCallbacksController_Dispose, &BeatmapCallbacksController:
 MAKE_HOOK(BpmController_ctor, (i2c::class_of<BpmController*>(), ".ctor", true), void, BpmController* self,
                         BpmController::InitData* initData, BeatmapCallbacksController* beatmapCallbacksController) {
   BpmController_ctor(self, initData, beatmapCallbacksController);
-  TracksStatic::bpmController = self;
+  Tracks::CoroutineRunner::BindBpm(beatmapCallbacksController, self);
 }
 
 void InstallBeatmapObjectCallbackControllerHooks() {

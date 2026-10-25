@@ -115,11 +115,13 @@ void CustomEventCallback(BeatmapCallbacksController* callbackController,
     LoadTrackEvent(customEventData, beatmapAD, customBeatmapData->v2orEarlier);
   }
 
-  if (!TracksStatic::bpmController) {
+  auto* bpmController = TracksStatic::GetBpmController(callbackController);
+  if (!bpmController) {
     CJDLogger::Logger.fmtLog<Paper::LogLevel::ERR>("BPM CONTROLLER NOT INITIALIZED");
+    return;
   }
 
-  auto bpm = TracksStatic::bpmController->currentBpm; // spawnController->get_currentBpm()
+  auto bpm = bpmController->currentBpm;
 
   // PC advances AnimateTrack at end of frame; AssignPathAnimation yields null.
   // Starting an event still evaluates its first (or zero-duration final) value now.

@@ -1,8 +1,9 @@
 #pragma once
-#include "beatsaber-hook/shared/safeptr.hpp"
-
+#include "GlobalNamespace/BeatmapCallbacksController.hpp"
 #include "GlobalNamespace/BpmController.hpp"
 
 struct __attribute__((visibility("default"))) TracksStatic {
-  static safe_ptr<GlobalNamespace::BpmController*> bpmController;
+  // Borrowed from the live runner; do not retain across callbacks or teardown.
+  static GlobalNamespace::BpmController* GetBpmController(
+      GlobalNamespace::BeatmapCallbacksController* controller);
 };
